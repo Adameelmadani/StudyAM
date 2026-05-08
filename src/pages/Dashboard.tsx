@@ -53,10 +53,17 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeDocType, setActiveDocType] = useState<DocType | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showModuleModal, setShowModuleModal] = useState(false);
+  const [showElementModal, setShowElementModal] = useState(false);
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
   const [linkError, setLinkError] = useState("");
+  const [moduleName, setModuleName] = useState("");
+  const [moduleError, setModuleError] = useState("");
+  const [elementName, setElementName] = useState("");
+  const [elementModule, setElementModule] = useState<number | "">("");
+  const [elementError, setElementError] = useState("");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -80,6 +87,21 @@ export default function Dashboard() {
       setActiveDocType(null);
     }
   }, [selectedElement]);
+
+  useEffect(() => {
+    if (!showModuleModal) {
+      setModuleName("");
+      setModuleError("");
+    }
+  }, [showModuleModal]);
+
+  useEffect(() => {
+    if (!showElementModal) {
+      setElementName("");
+      setElementModule("");
+      setElementError("");
+    }
+  }, [showElementModal]);
 
   const utils = trpc.useUtils();
   const { data: years } = trpc.year.list.useQuery();
@@ -118,6 +140,29 @@ export default function Dashboard() {
         utils.document.list.invalidate({ elementId: selectedElement });
       }
       utils.document.recent.invalidate();
+    },
+  });
+  const createModuleMutation = trpc.module.create.useMutation({
+    onSuccess: () => {
+      setShowModuleModal(false);
+      setModuleName("");
+      setModuleError("");
+      utils.module.list.invalidate();
+    },
+    onError: (err) => {
+      setModuleError(err.message || "Unable to create module.");
+    },
+  });
+  const createElementMutation = trpc.element.create.useMutation({
+    onSuccess: () => {
+      setShowElementModal(false);
+      setElementName("");
+      setElementModule("");
+      setElementError("");
+      utils.element.list.invalidate();
+    },
+    onError: (err) => {
+      setElementError(err.message || "Unable to create element.");
     },
   });
 
@@ -170,6 +215,17 @@ export default function Dashboard() {
     setLinkType(type);
     setLinkError("");
     setShowLinkModal(true);
+  };
+
+  const openModuleModal = () => {
+    setModuleError("");
+    setShowModuleModal(true);
+  };
+
+  const openElementModal = () => {
+    setElementError("");
+    setElementModule(expandedModule ?? "");
+    setShowElementModal(true);
   };
 
   const closeLinkModal = () => {
@@ -468,6 +524,24 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
+              {canManageDocs && (
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  <button
+                    onClick={openModuleModal}
+                    className="btn-primary text-sm disabled:opacity-60"
+                    disabled={!selectedYear}
+                  >
+                    Add Module
+                  </button>
+                  <button
+                    onClick={openElementModal}
+                    className="btn-glass text-sm disabled:opacity-60"
+                    disabled={!modulesList || modulesList.length === 0}
+                  >
+                    Add Element
+                  </button>
+                </div>
+              )}
               {/* Modules Grid */}
               {modulesList && modulesList.length > 0 ? (
                 <div className="space-y-4 mb-10">
@@ -695,6 +769,151 @@ export default function Dashboard() {
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
                   Save Link
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showModuleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Module</h3>
+                <p className="text-xs text-[#6b6b7b] mt-1">
+                  Year: {selectedYearData?.name || "Select a year first"}
+                  {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
+                </p>
+              </div>
+              <button onClick={() => setShowModuleModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+                <X className="w-5 h-5 text-[#6b6b7b]" />
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setModuleError("");
+                if (!moduleName.trim()) {
+                  setModuleError("Module name is required.");
+                  return;
+                }
+                if (!selectedYear) {
+                  setModuleError("Select an academic year first.");
+                  return;
+                }
+                createModuleMutation.mutate({
+                  name: moduleName.trim(),
+                  yearId: Number(selectedYear),
+                  sectorId: selectedSector ? Number(selectedSector) : undefined,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Module name</label>
+                <input
+                  type="text"
+                  value={moduleName}
+                  onChange={(e) => setModuleName(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="Module title"
+                  required
+                />
+              </div>
+              {moduleError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {moduleError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModuleModal(false)} className="flex-1 btn-glass">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 btn-primary">
+                  Save Module
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showElementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Element</h3>
+                <p className="text-xs text-[#6b6b7b] mt-1">
+                  Module:{" "}
+                  {elementModule
+                    ? modulesList?.find((mod) => mod.id === elementModule)?.name || "Selected module"
+                    : "Select a module"}
+                </p>
+              </div>
+              <button onClick={() => setShowElementModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+                <X className="w-5 h-5 text-[#6b6b7b]" />
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setElementError("");
+                if (!elementName.trim()) {
+                  setElementError("Element name is required.");
+                  return;
+                }
+                if (!elementModule) {
+                  setElementError("Select a module first.");
+                  return;
+                }
+                createElementMutation.mutate({
+                  name: elementName.trim(),
+                  moduleId: Number(elementModule),
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Element name</label>
+                <input
+                  type="text"
+                  value={elementName}
+                  onChange={(e) => setElementName(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="Element title"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Module</label>
+                <select
+                  value={elementModule}
+                  onChange={(e) => setElementModule(e.target.value ? Number(e.target.value) : "")}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  required
+                >
+                  <option value="">Select module</option>
+                  {modulesList?.map((mod) => (
+                    <option key={mod.id} value={mod.id}>
+                      {mod.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {elementError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {elementError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowElementModal(false)} className="flex-1 btn-glass">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 btn-primary">
+                  Save Element
                 </button>
               </div>
             </form>

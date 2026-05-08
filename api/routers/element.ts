@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { createRouter, publicQuery, adminQuery } from "../middleware";
+import { createRouter, publicQuery, representativeQuery, adminQuery } from "../middleware";
 import { getDb } from "../queries/connection";
 import { elements, modules, documents } from "@db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const elementRouter = createRouter({
   list: publicQuery
@@ -74,7 +75,7 @@ export const elementRouter = createRouter({
       return result;
     }),
 
-  create: adminQuery
+  create: representativeQuery
     .input(
       z.object({
         name: z.string().min(1, "Element name is required"),
@@ -82,8 +83,40 @@ export const elementRouter = createRouter({
         moduleId: z.number().int().positive(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
+      const mod = await db.query.modules.findFirst({
+        where: eq(modules.id, input.moduleId),
+      });
+      if (!mod) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+      if (ctx.user.role === "representative") {
+        if (!ctx.user.yearId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Representative must be assigned to a year",
+          });
+        }
+        if (mod.yearId !== ctx.user.yearId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create elements for your assigned year",
+          });
+        }
+        if (ctx.user.sectorId && mod.sectorId !== ctx.user.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create elements for your assigned sector",
+          });
+        }
+        if (!ctx.user.sectorId && mod.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create elements for modules without a sector",
+          });
+        }
+      }
       const result = await db.insert(elements).values({
         name: input.name,
         description: input.description || null,

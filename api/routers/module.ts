@@ -1,10 +1,15 @@
 import { z } from "zod";
-import { createRouter, publicQuery, adminQuery } from "../middleware";
+import { createRouter, publicQuery, representativeQuery, adminQuery } from "../middleware";
 import { getDb } from "../queries/connection";
 import { modules } from "@db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const moduleRouter = createRouter({
+  listAll: adminQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(modules).orderBy(modules.name);
+  }),
   list: publicQuery
     .input(
       z.object({
@@ -38,7 +43,7 @@ export const moduleRouter = createRouter({
         .orderBy(modules.name);
     }),
 
-  create: adminQuery
+  create: representativeQuery
     .input(
       z.object({
         name: z.string().min(1, "Module name is required"),
@@ -48,13 +53,40 @@ export const moduleRouter = createRouter({
         icon: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
+      const isRepresentative = ctx.user.role === "representative";
+      if (isRepresentative) {
+        if (!ctx.user.yearId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Representative must be assigned to a year",
+          });
+        }
+        if (input.yearId !== ctx.user.yearId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create modules for your assigned year",
+          });
+        }
+        if (ctx.user.sectorId && input.sectorId !== ctx.user.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create modules for your assigned sector",
+          });
+        }
+        if (!ctx.user.sectorId && input.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only create modules without a sector",
+          });
+        }
+      }
       const result = await db.insert(modules).values({
         name: input.name,
         description: input.description || null,
-        yearId: input.yearId,
-        sectorId: input.sectorId || null,
+        yearId: isRepresentative ? ctx.user.yearId : input.yearId,
+        sectorId: isRepresentative ? (ctx.user.sectorId || null) : (input.sectorId || null),
         icon: input.icon || "book",
       });
       const modId = Number(result[0].insertId);
