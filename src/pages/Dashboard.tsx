@@ -9,14 +9,16 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  Folder,
   GraduationCap,
   LogOut,
   ChevronDown as ChevronDownIcon,
   FolderOpen,
-  Upload,
+  Link2,
+  X,
 } from "lucide-react";
 
-type DocType = "all" | "cours" | "exam" | "test" | "tp" | "resume";
+type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
 const typeColors: Record<string, string> = {
   cours: "bg-blue-100 text-blue-700",
@@ -28,21 +30,33 @@ const typeColors: Record<string, string> = {
 
 const typeLabels: Record<string, string> = {
   cours: "Cours",
-  exam: "Exam",
-  test: "Test",
+  exam: "Exams",
+  test: "Tests",
   tp: "TP",
   resume: "Résumé",
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authLoading, isRepresentative, logout } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    isRepresentative,
+    isAdmin,
+    logout,
+  } = useAuth();
   const [selectedYear, setSelectedYear] = useState<number | "">("");
   const [selectedSector, setSelectedSector] = useState<number | "">("");
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
-  const [docFilter, setDocFilter] = useState<DocType>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeDocType, setActiveDocType] = useState<DocType | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkTitle, setLinkTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkType, setLinkType] = useState<DocType>("cours");
+  const [linkError, setLinkError] = useState("");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -61,6 +75,13 @@ export default function Dashboard() {
     }
   }, [user, selectedYear, selectedSector]);
 
+  useEffect(() => {
+    if (!selectedElement) {
+      setActiveDocType(null);
+    }
+  }, [selectedElement]);
+
+  const utils = trpc.useUtils();
   const { data: years } = trpc.year.list.useQuery();
   const { data: sectors } = trpc.sector.byYear.useQuery(
     { yearId: Number(selectedYear) },
@@ -87,16 +108,75 @@ export default function Dashboard() {
     { enabled: !!selectedElement }
   );
 
+  const createDocMutation = trpc.document.create.useMutation({
+    onSuccess: () => {
+      setShowLinkModal(false);
+      setLinkTitle("");
+      setLinkUrl("");
+      setLinkError("");
+      if (selectedElement) {
+        utils.document.list.invalidate({ elementId: selectedElement });
+      }
+      utils.document.recent.invalidate();
+    },
+  });
+
   const selectedYearData = years?.find((y) => y.id === selectedYear);
   const showSectorSelector = selectedYearData?.hasSectors;
+  const selectedSectorData = selectedSector
+    ? sectors?.find((s) => s.id === selectedSector)
+    : undefined;
 
-  const filteredDocs = elementDocs?.filter((d) =>
-    docFilter === "all" ? true : d.type === docFilter
-  );
+  const canManageDocs = isAdmin || isRepresentative;
+  const baseFolderTypes: DocType[] = ["cours", "test", "exam", "tp"];
+  const folderTypes: DocType[] = elementDocs?.some((d) => d.type === "resume")
+    ? [...baseFolderTypes, "resume"]
+    : baseFolderTypes;
+  const activeDocs = activeDocType
+    ? elementDocs?.filter((d) => d.type === activeDocType)
+    : [];
+  const isGoogleDriveUrl = (url: string) =>
+    /https?:\/\/(drive|docs)\.google\.com\//i.test(url);
 
   const toggleModule = (modId: number) => {
     setExpandedModule(expandedModule === modId ? null : modId);
     setSelectedElement(null);
+    setActiveDocType(null);
+  };
+
+  const scrollToSection = (section: "dashboard" | "courses" | "settings") => {
+    if (section === "dashboard") {
+      setSelectedElement(null);
+      setExpandedModule(null);
+      setActiveDocType(null);
+    }
+    if (section === "courses") {
+      setSelectedElement(null);
+      setActiveDocType(null);
+    }
+    const targetId =
+      section === "dashboard"
+        ? "dashboard-section"
+        : section === "courses"
+        ? "courses-section"
+        : "settings-section";
+    document.getElementById(targetId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const openLinkModal = (type: DocType) => {
+    setLinkType(type);
+    setLinkError("");
+    setShowLinkModal(true);
+  };
+
+  const closeLinkModal = () => {
+    setShowLinkModal(false);
+    setLinkTitle("");
+    setLinkUrl("");
+    setLinkError("");
   };
 
   if (authLoading) {
@@ -117,7 +197,11 @@ export default function Dashboard() {
           sidebarOpen ? "w-64" : "w-16"
         }`}
       >
-        <div className="p-4 flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="p-4 flex items-center gap-3 mb-6 w-full text-left bg-transparent border-0 hover:opacity-90 focus:outline-none"
+        >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center shrink-0">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
@@ -126,34 +210,24 @@ export default function Dashboard() {
               Study<span className="text-[#b24760]">AM</span>
             </span>
           )}
-        </div>
+        </button>
 
         <nav className="px-2 space-y-1">
-          <button className="nav-item active w-full">
+          <button
+            onClick={() => scrollToSection("dashboard")}
+            className="nav-item active w-full"
+          >
             <LayoutDashboard className="w-5 h-5" />
             {sidebarOpen && <span>Dashboard</span>}
           </button>
           <button
-            onClick={() => { setExpandedModule(null); setSelectedElement(null); }}
+            onClick={() => scrollToSection("courses")}
             className="nav-item w-full"
           >
             <BookOpen className="w-5 h-5" />
             {sidebarOpen && <span>My Courses</span>}
           </button>
-          {isRepresentative && (
-            <button
-              onClick={() => {
-                if (selectedElement) {
-                  document.getElementById("upload-modal")?.classList.remove("hidden");
-                }
-              }}
-              className="nav-item w-full"
-            >
-              <Upload className="w-5 h-5" />
-              {sidebarOpen && <span>Upload</span>}
-            </button>
-          )}
-          <button className="nav-item w-full">
+          <button onClick={() => scrollToSection("settings")} className="nav-item w-full">
             <Settings className="w-5 h-5" />
             {sidebarOpen && <span>Settings</span>}
           </button>
@@ -205,7 +279,8 @@ export default function Dashboard() {
           sidebarOpen ? "ml-64" : "ml-16"
         }`}
       >
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto">
+          <div id="dashboard-section" />
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#1a1a2e]">
@@ -267,11 +342,15 @@ export default function Dashboard() {
             </div>
           </div>
 
+          <div id="courses-section" />
           {selectedElement ? (
             /* Element Detail View */
             <div className="animate-fadeInUp">
               <button
-                onClick={() => setSelectedElement(null)}
+                onClick={() => {
+                  setSelectedElement(null);
+                  setActiveDocType(null);
+                }}
                 className="flex items-center gap-1 text-sm text-[#b24760] mb-4 hover:underline"
               >
                 <ChevronRight className="w-4 h-4 rotate-180" /> Back to modules
@@ -286,76 +365,105 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              {/* Document Type Filter */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {(["all", "cours", "exam", "test", "tp", "resume"] as DocType[]).map(
-                  (type) => (
-                    <button
-                      key={type}
-                      onClick={() => setDocFilter(type)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        docFilter === type
-                          ? "bg-[#b24760] text-white shadow-md shadow-[#b24760]/25"
-                          : "glass text-[#6b6b7b] hover:text-[#b24760]"
-                      }`}
-                    >
-                      {type === "all" ? "All" : typeLabels[type]}
-                      {type !== "all" && (
-                        <span className="ml-1.5 text-xs opacity-70">
-                          ({elementDocs?.filter((d) => d.type === type).length || 0})
-                        </span>
-                      )}
-                    </button>
-                  )
-                )}
-              </div>
-
-              {/* Documents List */}
-              {filteredDocs && filteredDocs.length > 0 ? (
-                <div className="space-y-3">
-                  {filteredDocs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="glass-strong p-4 flex items-center gap-4 hover:shadow-lg transition-all"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center shrink-0">
-                        <FileText className="w-5 h-5 text-[#b24760]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-[#1a1a2e] truncate">
-                          {doc.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              typeColors[doc.type]
-                            }`}
-                          >
-                            {typeLabels[doc.type]}
-                          </span>
-                          <span className="text-xs text-[#6b6b7b]">
-                            by {doc.uploaderName}
-                          </span>
-                        </div>
-                      </div>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-glass text-xs py-2 px-4 shrink-0"
-                      >
-                        Open
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="glass-strong p-12 text-center">
-                  <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                  <p className="text-[#6b6b7b]">
-                    No {docFilter === "all" ? "" : typeLabels[docFilter].toLowerCase()} documents uploaded yet
+              {!activeDocType ? (
+                <>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {folderTypes.map((type) => {
+                      const count = elementDocs?.filter((d) => d.type === type).length || 0;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setActiveDocType(type)}
+                          className="glass-strong p-4 text-left hover:shadow-lg transition-all"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                              <Folder className="w-5 h-5 text-[#b24760]" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-[#1a1a2e]">
+                                {typeLabels[type]}
+                              </p>
+                              <p className="text-xs text-[#6b6b7b]">
+                                {count} item{count === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-[#6b6b7b]">
+                    Select a folder to view documents.
                   </p>
-                </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <button
+                      onClick={() => setActiveDocType(null)}
+                      className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
+                    >
+                      <ChevronRight className="w-4 h-4 rotate-180" /> Back to folders
+                    </button>
+                    {canManageDocs && (
+                      <button
+                        onClick={() => openLinkModal(activeDocType)}
+                        className="btn-primary flex items-center gap-2 text-sm"
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Add Google Drive URL
+                      </button>
+                    )}
+                  </div>
+
+                  {activeDocs && activeDocs.length > 0 ? (
+                    <div className="space-y-3">
+                      {activeDocs.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="glass-strong p-4 flex items-center gap-4 hover:shadow-lg transition-all"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-[#b24760]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-[#1a1a2e] truncate">
+                              {doc.title}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  typeColors[doc.type]
+                                }`}
+                              >
+                                {typeLabels[doc.type]}
+                              </span>
+                              <span className="text-xs text-[#6b6b7b]">
+                                by {doc.uploaderName}
+                              </span>
+                            </div>
+                          </div>
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-glass text-xs py-2 px-4 shrink-0"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="glass-strong p-12 text-center">
+                      <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                      <p className="text-[#6b6b7b]">
+                        No {typeLabels[activeDocType].toLowerCase()} documents yet
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
@@ -371,7 +479,7 @@ export default function Dashboard() {
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
-                            <BookOpen className="w-6 h-6 text-white" />
+                            <Folder className="w-6 h-6 text-white" />
                           </div>
                           <div>
                             <h3 className="font-semibold text-[#1a1a2e]">
@@ -386,7 +494,7 @@ export default function Dashboard() {
                           <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
                             {moduleElements && expandedModule === mod.id
                               ? `${moduleElements.length} elements`
-                              : "View elements"}
+                              : "Open folder"}
                           </span>
                           <ChevronDown
                             className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
@@ -403,35 +511,24 @@ export default function Dashboard() {
                               {moduleElements.map((el) => (
                                 <button
                                   key={el.id}
-                                  onClick={() => setSelectedElement(el.id)}
+                                  onClick={() => {
+                                    setSelectedElement(el.id);
+                                    setActiveDocType(null);
+                                  }}
                                   className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left"
                                 >
-                                  <h4 className="font-medium text-[#1a1a2e] mb-1">
-                                    {el.name}
-                                  </h4>
-                                  <p className="text-xs text-[#6b6b7b]">
-                                    {el.description || "Click to view documents"}
-                                  </p>
-                                  <div className="flex gap-1.5 mt-2">
-                                    {["cours", "exam", "test", "tp", "resume"].map(
-                                      (t) => (
-                                        <span
-                                          key={t}
-                                          className={`w-2.5 h-2.5 rounded-full ${
-                                            t === "cours"
-                                              ? "bg-blue-400"
-                                              : t === "exam"
-                                              ? "bg-red-400"
-                                              : t === "test"
-                                              ? "bg-orange-400"
-                                              : t === "tp"
-                                              ? "bg-green-400"
-                                              : "bg-purple-400"
-                                          }`}
-                                          title={typeLabels[t]}
-                                        />
-                                      )
-                                    )}
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                                      <Folder className="w-4 h-4 text-[#b24760]" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium text-[#1a1a2e] mb-1">
+                                        {el.name}
+                                      </h4>
+                                      <p className="text-xs text-[#6b6b7b]">
+                                        {el.description || "Open element folder"}
+                                      </p>
+                                    </div>
                                   </div>
                                 </button>
                               ))}
@@ -475,7 +572,10 @@ export default function Dashboard() {
                       <div
                         key={doc.id}
                         className="glass-strong p-4 glass-hover cursor-pointer"
-                        onClick={() => setSelectedElement(doc.elementId)}
+                        onClick={() => {
+                          setSelectedElement(doc.elementId);
+                          setActiveDocType(doc.type as DocType);
+                        }}
                       >
                         <span
                           className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${
@@ -497,8 +597,110 @@ export default function Dashboard() {
               )}
             </>
           )}
+          <section id="settings-section" className="mt-12">
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Settings</h3>
+            <div className="glass-strong p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="min-w-0">
+                <p className="text-xs text-[#6b6b7b]">Full name</p>
+                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.name || "-"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-[#6b6b7b]">Email</p>
+                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.email || "-"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-[#6b6b7b]">ENSAM code</p>
+                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.ensamCode || "-"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-[#6b6b7b]">Academic track</p>
+                <p className="text-sm font-medium text-[#1a1a2e] break-words">
+                  {selectedYearData?.name || "N/A"}
+                  {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-[#6b6b7b] mt-3">
+              Representative access is granted by admins through the admin dashboard.
+            </p>
+          </section>
         </div>
       </main>
+
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Google Drive URL</h3>
+                <p className="text-xs text-[#6b6b7b] mt-1">
+                  Folder: {typeLabels[linkType]}
+                </p>
+              </div>
+              <button onClick={closeLinkModal} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+                <X className="w-5 h-5 text-[#6b6b7b]" />
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setLinkError("");
+                if (!selectedElement) {
+                  setLinkError("Select an element folder first.");
+                  return;
+                }
+                if (!isGoogleDriveUrl(linkUrl)) {
+                  setLinkError("Please provide a Google Drive URL.");
+                  return;
+                }
+                createDocMutation.mutate({
+                  title: linkTitle,
+                  type: linkType,
+                  url: linkUrl,
+                  elementId: selectedElement,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Title</label>
+                <input
+                  type="text"
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="Document title"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive URL</label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="https://drive.google.com/..."
+                  required
+                />
+              </div>
+              {linkError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {linkError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={closeLinkModal} className="flex-1 btn-glass">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 btn-primary">
+                  Save Link
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

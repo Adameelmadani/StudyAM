@@ -13,18 +13,15 @@ import {
   UserPlus,
   LogIn,
   ArrowLeft,
-  Shield,
 } from "lucide-react";
 
-type AuthMode = "login" | "register" | "select-type";
-type AccountType = "student" | "representative";
+type AuthMode = "login" | "register";
 
 
 export default function Login() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
-  const [accountType, setAccountType] = useState<AccountType>("student");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,7 +67,8 @@ export default function Login() {
         password,
       });
       localStorage.setItem("local_auth_token", result.token);
-      window.location.href = "/dashboard";
+      const destination = result.user.role === "admin" ? "/admin" : "/dashboard";
+      window.location.href = destination;
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || "Invalid credentials");
@@ -105,7 +103,6 @@ export default function Login() {
         password,
         yearId: Number(yearId),
         sectorId: sectorId ? Number(sectorId) : undefined,
-        role: accountType,
       });
       localStorage.setItem("local_auth_token", result.token);
       window.location.href = "/dashboard";
@@ -121,14 +118,18 @@ export default function Login() {
     <div className="min-h-screen page-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-6">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="text-center mb-6 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
+        >
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#b24760] to-[#8e3850] shadow-lg shadow-[#b24760]/30 mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-[#1a1a2e]">
             Study<span className="text-[#b24760]">AM</span>
           </h1>
-        </div>
+        </button>
 
         {/* Card */}
         <div className="glass-strong p-8">
@@ -203,7 +204,7 @@ export default function Login() {
               <p className="text-center text-sm text-[#6b6b7b] mt-2">
                 Don&apos;t have an account?{" "}
                 <button
-                  onClick={() => { setMode("select-type"); setError(""); }}
+                  onClick={() => { setMode("register"); setError(""); }}
                   className="text-[#b24760] font-medium hover:underline"
                 >
                   Register
@@ -212,80 +213,21 @@ export default function Login() {
             </>
           )}
 
-          {mode === "select-type" && (
-            <>
-              <button
-                onClick={() => setMode("login")}
-                className="flex items-center gap-1 text-sm text-[#6b6b7b] hover:text-[#b24760] mb-6"
-              >
-                <ArrowLeft className="w-4 h-4" /> Back to login
-              </button>
-
-              <h2 className="text-xl font-semibold text-[#1a1a2e] mb-2">
-                Create Account
-              </h2>
-              <p className="text-sm text-[#6b6b7b] mb-6">
-                Select your account type
-              </p>
-
-              <div className="space-y-4">
-                <button
-                  onClick={() => { setAccountType("student"); setMode("register"); }}
-                  className={`w-full p-6 rounded-2xl border-2 transition-all text-left ${
-                    accountType === "student"
-                      ? "border-[#b24760] bg-[#fdf2f4]"
-                      : "border-transparent glass hover:border-[#b24760]/30"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center shrink-0">
-                      <UserPlus className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-[#1a1a2e]">Student</h3>
-                      <p className="text-sm text-[#6b6b7b] mt-1">
-                        Browse courses for your year and sector
-                      </p>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => { setAccountType("representative"); setMode("register"); }}
-                  className={`w-full p-6 rounded-2xl border-2 transition-all text-left ${
-                    accountType === "representative"
-                      ? "border-[#b24760] bg-[#fdf2f4]"
-                      : "border-transparent glass hover:border-[#b24760]/30"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center shrink-0">
-                      <Shield className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-[#1a1a2e]">Représentant</h3>
-                      <p className="text-sm text-[#6b6b7b] mt-1">
-                        Upload and manage course materials (requires admin approval)
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </>
-          )}
-
           {mode === "register" && (
             <>
               <button
-                onClick={() => setMode("select-type")}
+                onClick={() => setMode("login")}
                 className="flex items-center gap-1 text-sm text-[#6b6b7b] hover:text-[#b24760] mb-6"
               >
                 <ArrowLeft className="w-4 h-4" /> Back
               </button>
 
               <h2 className="text-xl font-semibold text-[#1a1a2e] mb-2">
-                Register as {accountType === "student" ? "Student" : "Représentant"}
+                Create your student account
               </h2>
+              <p className="text-sm text-[#6b6b7b]">
+                Representative access is granted by admins through the dashboard.
+              </p>
 
               <form onSubmit={handleRegister} className="space-y-4 mt-6">
                 <div>

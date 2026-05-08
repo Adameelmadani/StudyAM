@@ -19,7 +19,6 @@ export const localAuthRouter = createRouter({
         password: z.string().min(6, "Password must be at least 6 characters"),
         yearId: z.number().int().positive(),
         sectorId: z.number().int().positive().optional(),
-        role: z.enum(["student", "representative"]).default("student"),
       })
     )
     .mutation(async ({ input }) => {
@@ -48,10 +47,10 @@ export const localAuthRouter = createRouter({
         email: input.email,
         ensamCode: input.ensamCode,
         passwordHash,
-        role: input.role,
+        role: "student",
         yearId: input.yearId,
         sectorId: input.sectorId || null,
-        isApproved: input.role === "student", // Students auto-approved, reps need admin approval
+        isApproved: true,
       });
 
       const userId = Number(result[0].insertId);

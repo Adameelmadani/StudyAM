@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
@@ -31,9 +31,8 @@ export default function AdminDashboard() {
   const [showGrantModal, setShowGrantModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showElementModal, setShowElementModal] = useState(false);
-  const [grantUserId, setGrantUserId] = useState<number | "">("");
-  const [grantYearId, setGrantYearId] = useState<number | "">("");
-  const [grantSectorId, setGrantSectorId] = useState<number | "">("");
+  const [grantEnsamCode, setGrantEnsamCode] = useState("");
+  const [grantError, setGrantError] = useState("");
   const [moduleName, setModuleName] = useState("");
   const [moduleYear, setModuleYear] = useState<number | "">("");
   const [moduleSector, setModuleSector] = useState<number | "">("");
@@ -61,9 +60,10 @@ export default function AdminDashboard() {
     { role: "representative", search: searchQuery || undefined, limit: 50 },
     { enabled: isAdmin && activeTab === "representatives" }
   );
-  const { data: allUsers } = trpc.user.list.useQuery(
-    { limit: 200 },
-    { enabled: isAdmin }
+  const grantSearchValue = grantEnsamCode.trim();
+  const { data: grantSearchResults, isFetching: grantSearching } = trpc.user.list.useQuery(
+    { role: "student", search: grantSearchValue || undefined, limit: 5 },
+    { enabled: isAdmin && showGrantModal && grantSearchValue.length > 0 }
   );
   const { data: years } = trpc.year.list.useQuery();
   const { data: activityLogs } = trpc.activity.list.useQuery(
@@ -71,8 +71,23 @@ export default function AdminDashboard() {
     { enabled: isAdmin && activeTab === "activity" }
   );
 
+  const grantCandidate = useMemo(() => {
+    if (!grantSearchValue) return null;
+    return (
+      grantSearchResults?.users.find(
+        (u) => u.ensamCode?.toLowerCase() === grantSearchValue.toLowerCase()
+      ) || null
+    );
+  }, [grantSearchResults, grantSearchValue]);
+
   const grantMutation = trpc.user.grantRepresentative.useMutation({
-    onSuccess: () => { setShowGrantModal(false); utils.user.list.invalidate(); utils.user.stats.invalidate(); },
+    onSuccess: () => {
+      setShowGrantModal(false);
+      setGrantEnsamCode("");
+      setGrantError("");
+      utils.user.list.invalidate();
+      utils.user.stats.invalidate();
+    },
   });
   const revokeMutation = trpc.user.revokeRepresentative.useMutation({
     onSuccess: () => { utils.user.list.invalidate(); utils.user.stats.invalidate(); },
@@ -87,15 +102,29 @@ export default function AdminDashboard() {
     onSuccess: () => { setShowElementModal(false); utils.invalidate(); },
   });
 
+  useEffect(() => {
+    if (!showGrantModal) {
+      setGrantEnsamCode("");
+      setGrantError("");
+    }
+  }, [showGrantModal]);
+
   const handleGrant = (e: React.FormEvent) => {
     e.preventDefault();
-    if (grantUserId && grantYearId) {
-      grantMutation.mutate({
-        userId: Number(grantUserId),
-        yearId: Number(grantYearId),
-        sectorId: grantSectorId ? Number(grantSectorId) : undefined,
-      });
+    setGrantError("");
+    if (!grantCandidate) {
+      setGrantError("No student found with that ENSAM code.");
+      return;
     }
+    if (!grantCandidate.yearId) {
+      setGrantError("Selected student is missing a year assignment.");
+      return;
+    }
+    grantMutation.mutate({
+      userId: grantCandidate.id,
+      yearId: grantCandidate.yearId,
+      sectorId: grantCandidate.sectorId || undefined,
+    });
   };
 
   if (authLoading) {
@@ -117,17 +146,21 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen page-bg flex">
+    <div className="min-h-screen page-bg flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="sidebar w-64 fixed left-0 top-0 bottom-0 z-40">
-        <div className="p-4 flex items-center gap-3 mb-6">
+      <aside className="sidebar relative w-full md:w-64 md:fixed md:left-0 md:top-0 md:bottom-0 md:z-40 border-b border-[#f5d0d8] md:border-b-0">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="p-4 flex items-center gap-3 mb-6 w-full text-left bg-transparent border-0 hover:opacity-90 focus:outline-none"
+        >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
           <span className="text-lg font-bold text-[#1a1a2e]">
             Study<span className="text-[#b24760]">AM</span>
           </span>
-        </div>
+        </button>
 
         <div className="px-3 mb-2">
           <span className="text-[10px] font-semibold text-[#6b6b7b] uppercase tracking-wider px-2">
@@ -152,7 +185,7 @@ export default function AdminDashboard() {
           </button>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="md:absolute md:bottom-0 md:left-0 md:right-0 p-4">
           <button
             onClick={logout}
             className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50"
@@ -175,8 +208,8 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64">
-        <div className="p-8 max-w-7xl mx-auto">
+      <main className="flex-1 md:ml-64">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#1a1a2e]">
               {navItems.find((n) => n.id === activeTab)?.label}
@@ -190,7 +223,7 @@ export default function AdminDashboard() {
           {activeTab === "dashboard" && stats && (
             <>
               {/* Stats Cards */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                 <div className="glass-strong p-6">
                   <div className="flex items-center justify-between mb-4">
                     <Users className="w-8 h-8 text-[#b24760]" />
@@ -231,7 +264,7 @@ export default function AdminDashboard() {
 
               {/* Quick Actions */}
               <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Quick Actions</h3>
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <button
                   onClick={() => { setActiveTab("representatives"); setShowGrantModal(true); }}
                   className="glass-strong p-6 text-left glass-hover"
@@ -263,8 +296,8 @@ export default function AdminDashboard() {
           {/* Students Tab */}
           {activeTab === "students" && (
             <>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative flex-1 max-w-md">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+                <div className="relative flex-1 w-full max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
                   <input
                     type="text"
@@ -277,10 +310,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="glass-strong overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#f5d0d8]">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
+                <div className="overflow-x-auto">
+                  <table className="min-w-[720px] w-full">
+                    <thead>
+                      <tr className="border-b border-[#f5d0d8]">
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">ENSAM Code</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Email</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Year</th>
@@ -302,8 +336,18 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
-                                setGrantUserId(u.id);
-                                setShowGrantModal(true);
+                                setGrantError("");
+                                if (!u.yearId) {
+                                  setGrantError("Selected student is missing a year assignment.");
+                                  setGrantEnsamCode(u.ensamCode || "");
+                                  setShowGrantModal(true);
+                                  return;
+                                }
+                                grantMutation.mutate({
+                                  userId: u.id,
+                                  yearId: u.yearId,
+                                  sectorId: u.sectorId || undefined,
+                                });
                               }}
                               className="p-1.5 rounded-lg hover:bg-[#fdf2f4] text-[#b24760]"
                               title="Grant représentant access"
@@ -322,7 +366,8 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
                 {studentsData?.users.length === 0 && (
                   <div className="p-8 text-center text-[#6b6b7b]">No students found</div>
                 )}
@@ -333,8 +378,8 @@ export default function AdminDashboard() {
           {/* Représentants Tab */}
           {activeTab === "representatives" && (
             <>
-              <div className="flex items-center justify-between mb-6">
-                <div className="relative flex-1 max-w-md">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+                <div className="relative flex-1 w-full max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
                   <input
                     type="text"
@@ -354,10 +399,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="glass-strong overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#f5d0d8]">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
+                <div className="overflow-x-auto">
+                  <table className="min-w-[720px] w-full">
+                    <thead>
+                      <tr className="border-b border-[#f5d0d8]">
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">ENSAM Code</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Year</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Status</th>
@@ -394,7 +440,8 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
                 {repsData?.users.length === 0 && (
                   <div className="p-8 text-center text-[#6b6b7b]">No représentants found</div>
                 )}
@@ -405,7 +452,7 @@ export default function AdminDashboard() {
           {/* Courses Tab */}
           {activeTab === "courses" && (
             <>
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
                 <button
                   onClick={() => setShowModuleModal(true)}
                   className="btn-primary flex items-center gap-2 text-sm"
@@ -477,49 +524,38 @@ export default function AdminDashboard() {
             </h3>
             <form onSubmit={handleGrant} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Student</label>
-                <select
-                  value={grantUserId}
-                  onChange={(e) => setGrantUserId(e.target.value ? Number(e.target.value) : "")}
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Student ENSAM Code</label>
+                <input
+                  type="text"
+                  value={grantEnsamCode}
+                  onChange={(e) => setGrantEnsamCode(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="Type the student code (e.g. AM1234)"
                   required
-                >
-                  <option value="">Select student</option>
-                  {allUsers?.users
-                    .filter((u) => u.role === "student")
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>{u.name} ({u.ensamCode})</option>
-                    ))}
-                </select>
+                />
+                {grantSearching && (
+                  <p className="text-xs text-[#6b6b7b] mt-2">Searching…</p>
+                )}
+                {!grantSearching && grantEnsamCode && !grantCandidate && (
+                  <p className="text-xs text-red-600 mt-2">
+                    No student found with that ENSAM code.
+                  </p>
+                )}
+                {grantCandidate && (
+                  <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
+                    <p className="font-medium">
+                      Found: {grantCandidate.name} ({grantCandidate.ensamCode})
+                    </p>
+                    <p className="mt-1">
+                      Year: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
+                      {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Year</label>
-                <select
-                  value={grantYearId}
-                  onChange={(e) => {
-                    setGrantYearId(e.target.value ? Number(e.target.value) : "");
-                    setGrantSectorId("");
-                  }}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  required
-                >
-                  <option value="">Select year</option>
-                  {years?.map((y) => (
-                    <option key={y.id} value={y.id}>{y.name}</option>
-                  ))}
-                </select>
-              </div>
-              {years?.find((y) => y.id === grantYearId)?.hasSectors && (
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Sector</label>
-                  <select
-                    value={grantSectorId}
-                    onChange={(e) => setGrantSectorId(e.target.value ? Number(e.target.value) : "")}
-                    className="w-full px-4 py-2.5 glass-input text-sm"
-                  >
-                    <option value="">Select sector</option>
-                    {/* We would need to fetch sectors for the selected year */}
-                  </select>
+              {grantError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {grantError}
                 </div>
               )}
               <div className="flex gap-3 pt-2">

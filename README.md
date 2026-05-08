@@ -185,7 +185,7 @@ The application uses the following tables:
 - Can view all uploaded documents
 
 ### Representative
-- Registers like a student but requests representative role
+- Granted by admins from student accounts
 - Requires admin approval to upload documents
 - Can only upload documents for their assigned year and sector
 - Can upload Google Drive URLs with document type selection

@@ -9,12 +9,16 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 bg-transparent border-0 hover:opacity-90 focus:outline-none"
+          >
             <GraduationCap className="w-8 h-8 text-[#b24760]" />
             <span className="text-xl font-bold">
               Study<span className="text-[#b24760]">AM</span>
             </span>
-          </div>
+          </button>
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/login")}
@@ -138,12 +142,16 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-[#1a1a2e] py-12">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center justify-center gap-2 mb-4 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
+          >
             <GraduationCap className="w-6 h-6 text-[#b24760]" />
             <span className="text-xl font-bold text-white">
               Study<span className="text-[#b24760]">AM</span>
             </span>
-          </div>
+          </button>
           <p className="text-[#dbdbdb] text-base mb-2">
             ENSAM Course Platform
           </p>
