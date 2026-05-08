@@ -2,10 +2,27 @@ import { useNavigate } from "react-router";
 import { Calendar, GitBranch, Users, BookOpen, GraduationCap, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export default function Landing() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+    }
+  }, [isLoading, isAuthenticated, user, navigate]);
+
+  const handleAuthAction = () => {
+    if (isAuthenticated && user) {
+      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -25,13 +42,13 @@ export default function Landing() {
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
             <button
-              onClick={() => navigate("/login")}
+              onClick={handleAuthAction}
               className="btn-glass text-sm py-2 px-5"
             >
               {t("common.signIn")}
             </button>
             <button
-              onClick={() => navigate("/login")}
+              onClick={handleAuthAction}
               className="btn-primary text-sm py-2 px-5"
             >
               {t("common.getStarted")}
@@ -64,7 +81,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => navigate("/login")}
+                onClick={handleAuthAction}
                 className="btn-primary flex items-center gap-2 border border-white/30"
               >
                 {t("common.getStarted")}
