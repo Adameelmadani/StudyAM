@@ -144,10 +144,38 @@ export const elementRouter = createRouter({
       return db.query.elements.findFirst({ where: eq(elements.id, id) });
     }),
 
-  delete: adminQuery
+  delete: representativeQuery
     .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
+      const el = await db.query.elements.findFirst({
+        where: eq(elements.id, input.id),
+      });
+      if (!el) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Element not found" });
+      }
+
+      if (ctx.user.role === "representative") {
+        const mod = await db.query.modules.findFirst({
+          where: eq(modules.id, el.moduleId),
+        });
+        if (!mod) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+        }
+        if (mod.yearId !== ctx.user.yearId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete elements for your assigned year",
+          });
+        }
+        if (mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete elements for your assigned sector",
+          });
+        }
+      }
+
       await db.delete(elements).where(eq(elements.id, input.id));
       return { success: true };
     }),

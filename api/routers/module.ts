@@ -112,10 +112,32 @@ export const moduleRouter = createRouter({
       return db.query.modules.findFirst({ where: eq(modules.id, id) });
     }),
 
-  delete: adminQuery
+  delete: representativeQuery
     .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
+      const mod = await db.query.modules.findFirst({
+        where: eq(modules.id, input.id),
+      });
+      if (!mod) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+
+      if (ctx.user.role === "representative") {
+        if (mod.yearId !== ctx.user.yearId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete modules for your assigned year",
+          });
+        }
+        if (mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete modules for your assigned sector",
+          });
+        }
+      }
+
       await db.delete(modules).where(eq(modules.id, input.id));
       return { success: true };
     }),

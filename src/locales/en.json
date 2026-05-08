@@ -151,5 +151,13 @@
     "title": "Page Not Found",
     "desc": "This page doesn't exist",
     "backHome": "Back to Home"
+  },
+  "delete": {
+    "moduleTitle": "Delete Module",
+    "moduleConfirm": "Are you sure you want to delete this module and all its contents? This cannot be undone.",
+    "elementTitle": "Delete Element",
+    "elementConfirm": "Are you sure you want to delete this element and all its documents? This cannot be undone.",
+    "documentTitle": "Delete Document",
+    "documentConfirm": "Are you sure you want to delete this document?"
   }
 }

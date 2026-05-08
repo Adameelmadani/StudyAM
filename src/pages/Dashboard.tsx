@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Link2,
   X,
+  Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -67,6 +68,11 @@ export default function Dashboard() {
   const [elementName, setElementName] = useState("");
   const [elementModule, setElementModule] = useState<number | "">("");
   const [elementError, setElementError] = useState("");
+  const [deleteModal, setDeleteModal] = useState<{
+    type: "module" | "element" | "document";
+    id: number;
+    title: string;
+  } | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -166,6 +172,30 @@ export default function Dashboard() {
     },
     onError: (err) => {
       setElementError(err.message || "Unable to create element.");
+    },
+  });
+
+  const deleteModuleMutation = trpc.module.delete.useMutation({
+    onSuccess: () => {
+      setDeleteModal(null);
+      utils.module.list.invalidate();
+    },
+  });
+
+  const deleteElementMutation = trpc.element.delete.useMutation({
+    onSuccess: () => {
+      setDeleteModal(null);
+      utils.element.list.invalidate();
+    },
+  });
+
+  const deleteDocMutation = trpc.document.delete.useMutation({
+    onSuccess: () => {
+      setDeleteModal(null);
+      if (selectedElement) {
+        utils.document.list.invalidate({ elementId: selectedElement });
+      }
+      utils.document.recent.invalidate();
     },
   });
 
@@ -506,14 +536,30 @@ export default function Dashboard() {
                               </span>
                             </div>
                           </div>
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-glass text-xs py-2 px-4 shrink-0"
-                          >
-                            {t("common.open")}
-                          </a>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-glass text-xs py-2 px-4 shrink-0"
+                            >
+                              {t("common.open")}
+                            </a>
+                            {canManageDocs && (
+                              <button
+                                onClick={() =>
+                                  setDeleteModal({
+                                    type: "document",
+                                    id: doc.id,
+                                    title: doc.title,
+                                  })
+                                }
+                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -553,9 +599,17 @@ export default function Dashboard() {
                 <div className="space-y-4 mb-10">
                   {modulesList.map((mod) => (
                     <div key={mod.id} className="glass-strong overflow-hidden">
-                      <button
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => toggleModule(mod.id)}
-                        className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleModule(mod.id);
+                          }
+                        }}
+                        className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
@@ -581,27 +635,51 @@ export default function Dashboard() {
                               expandedModule === mod.id ? "rotate-180" : ""
                             }`}
                           />
+                          {canManageDocs && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteModal({
+                                  type: "module",
+                                  id: mod.id,
+                                  title: mod.name,
+                                });
+                              }}
+                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
 
                       {expandedModule === mod.id && moduleElements && (
                         <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
                           {moduleElements.length > 0 ? (
                             <div className="grid sm:grid-cols-2 gap-3">
                               {moduleElements.map((el) => (
-                                <button
+                                <div
                                   key={el.id}
+                                  role="button"
+                                  tabIndex={0}
                                   onClick={() => {
                                     setSelectedElement(el.id);
                                     setActiveDocType(null);
                                   }}
-                                  className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      setSelectedElement(el.id);
+                                      setActiveDocType(null);
+                                    }
+                                  }}
+                                  className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
                                 >
                                   <div className="flex items-start gap-3">
                                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
                                       <Folder className="w-4 h-4 text-[#b24760]" />
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                       <h4 className="font-medium text-[#1a1a2e] mb-1">
                                         {el.name}
                                       </h4>
@@ -609,8 +687,23 @@ export default function Dashboard() {
                                         {el.description || t("dashboard.openFolder")}
                                       </p>
                                     </div>
+                                    {canManageDocs && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setDeleteModal({
+                                            type: "element",
+                                            id: el.id,
+                                            title: el.name,
+                                          });
+                                        }}
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    )}
                                   </div>
-                                </button>
+                                </div>
                               ))}
                             </div>
                           ) : (
@@ -923,6 +1016,51 @@ export default function Dashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-sm animate-fadeInUp">
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-2">{t("admin.confirmDelete")}</h3>
+            <p className="text-sm text-[#6b6b7b] mb-6">
+              {deleteModal.type === "module"
+                ? t("delete.moduleConfirm")
+                : deleteModal.type === "element"
+                ? t("delete.elementConfirm")
+                : t("delete.documentConfirm")}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal(null)}
+                className="flex-1 btn-glass"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteModal.type === "module") {
+                    deleteModuleMutation.mutate({ id: deleteModal.id });
+                  } else if (deleteModal.type === "element") {
+                    deleteElementMutation.mutate({ id: deleteModal.id });
+                  } else if (deleteModal.type === "document") {
+                    deleteDocMutation.mutate({ id: deleteModal.id });
+                  }
+                }}
+                disabled={
+                  deleteModuleMutation.isLoading ||
+                  deleteElementMutation.isLoading ||
+                  deleteDocMutation.isLoading
+                }
+                className="flex-1 px-6 py-3 rounded-full font-medium text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+              >
+                {deleteModuleMutation.isLoading ||
+                deleteElementMutation.isLoading ||
+                deleteDocMutation.isLoading
+                  ? t("common.loading")
+                  : t("common.delete")}
+              </button>
+            </div>
           </div>
         </div>
       )}

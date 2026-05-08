@@ -151,5 +151,13 @@
     "title": "Page non trouvée",
     "desc": "Cette page n'existe pas",
     "backHome": "Retour à l'accueil"
+  },
+  "delete": {
+    "moduleTitle": "Supprimer le module",
+    "moduleConfirm": "Êtes-vous sûr de vouloir supprimer ce module et tout son contenu ? Cette action est irréversible.",
+    "elementTitle": "Supprimer l'élément",
+    "elementConfirm": "Êtes-vous sûr de vouloir supprimer cet élément et tous ses documents ? Cette action est irréversible.",
+    "documentTitle": "Supprimer le document",
+    "documentConfirm": "Êtes-vous sûr de vouloir supprimer ce document ?"
   }
 }
