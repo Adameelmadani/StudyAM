@@ -20,11 +20,14 @@ import {
   FolderPlus,
   UploadCloud,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type AdminTab = "dashboard" | "students" | "representatives" | "courses" | "activity";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,11 +116,11 @@ export default function AdminDashboard() {
     e.preventDefault();
     setGrantError("");
     if (!grantCandidate) {
-      setGrantError("No student found with that ENSAM code.");
+      setGrantError(t("admin.noStudentFound"));
       return;
     }
     if (!grantCandidate.yearId) {
-      setGrantError("Selected student is missing a year assignment.");
+      setGrantError(t("admin.missingYear"));
       return;
     }
     grantMutation.mutate({
@@ -138,11 +141,11 @@ export default function AdminDashboard() {
   if (!isAdmin) return null;
 
   const navItems: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "students", label: "Students", icon: Users },
-    { id: "representatives", label: "Représentants", icon: Shield },
-    { id: "courses", label: "Courses", icon: BookOpen },
-    { id: "activity", label: "Activity", icon: Activity },
+    { id: "dashboard", label: t("common.dashboard"), icon: LayoutDashboard },
+    { id: "students", label: t("admin.students"), icon: Users },
+    { id: "representatives", label: t("admin.representatives"), icon: Shield },
+    { id: "courses", label: t("admin.courses"), icon: BookOpen },
+    { id: "activity", label: t("admin.activity"), icon: Activity },
   ];
 
   return (
@@ -164,7 +167,7 @@ export default function AdminDashboard() {
 
         <div className="px-3 mb-2">
           <span className="text-[10px] font-semibold text-[#6b6b7b] uppercase tracking-wider px-2">
-            Admin Panel
+            {t("admin.panel")}
           </span>
         </div>
 
@@ -181,7 +184,7 @@ export default function AdminDashboard() {
           ))}
           <button className="nav-item w-full">
             <Settings className="w-5 h-5" />
-            <span>Settings</span>
+            <span>{t("common.settings")}</span>
           </button>
         </nav>
 
@@ -191,7 +194,7 @@ export default function AdminDashboard() {
             className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut className="w-5 h-5" />
-            <span>Logout</span>
+            <span>{t("common.logout")}</span>
           </button>
           <div className="mt-3 pt-3 border-t border-[#f5d0d8]">
             <div className="flex items-center gap-3 px-2">
@@ -200,7 +203,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#1a1a2e]">{user?.name}</p>
-                <p className="text-xs text-[#6b6b7b]">Administrator</p>
+                <p className="text-xs text-[#6b6b7b]">{t("admin.administrator")}</p>
               </div>
             </div>
           </div>
@@ -210,13 +213,16 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 md:ml-64">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#1a1a2e]">
-              {navItems.find((n) => n.id === activeTab)?.label}
-            </h1>
-            <p className="text-[#6b6b7b] mt-1">
-              Manage your platform
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-[#1a1a2e]">
+                {navItems.find((n) => n.id === activeTab)?.label}
+              </h1>
+              <p className="text-[#6b6b7b] mt-1">
+                {t("admin.managePlatform")}
+              </p>
+            </div>
+            <LanguageSwitcher />
           </div>
 
           {/* Dashboard Tab */}
@@ -231,7 +237,7 @@ export default function AdminDashboard() {
                       {stats.totalStudents}
                     </span>
                   </div>
-                  <p className="text-sm text-[#6b6b7b]">Total Students</p>
+                  <p className="text-sm text-[#6b6b7b]">{t("admin.totalStudents")}</p>
                 </div>
                 <div className="glass-strong p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -240,7 +246,7 @@ export default function AdminDashboard() {
                       {stats.totalRepresentatives}
                     </span>
                   </div>
-                  <p className="text-sm text-[#6b6b7b]">Représentants</p>
+                  <p className="text-sm text-[#6b6b7b]">{t("admin.representatives")}</p>
                 </div>
                 <div className="glass-strong p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -249,7 +255,7 @@ export default function AdminDashboard() {
                       {stats.totalElements}
                     </span>
                   </div>
-                  <p className="text-sm text-[#6b6b7b]">Course Elements</p>
+                  <p className="text-sm text-[#6b6b7b]">{t("admin.courseElements")}</p>
                 </div>
                 <div className="glass-strong p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -258,36 +264,36 @@ export default function AdminDashboard() {
                       {stats.totalDocuments}
                     </span>
                   </div>
-                  <p className="text-sm text-[#6b6b7b]">Documents</p>
+                  <p className="text-sm text-[#6b6b7b]">{t("admin.documents")}</p>
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Quick Actions</h3>
+              <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("admin.quickActions")}</h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <button
                   onClick={() => { setActiveTab("representatives"); setShowGrantModal(true); }}
                   className="glass-strong p-6 text-left glass-hover"
                 >
                   <Shield className="w-8 h-8 text-[#b24760] mb-3" />
-                  <h4 className="font-medium text-[#1a1a2e]">Grant Rep Access</h4>
-                  <p className="text-sm text-[#6b6b7b] mt-1">Approve a représentant</p>
+                  <h4 className="font-medium text-[#1a1a2e]">{t("admin.grantRepAccess")}</h4>
+                  <p className="text-sm text-[#6b6b7b] mt-1">{t("admin.approveRep")}</p>
                 </button>
                 <button
                   onClick={() => { setActiveTab("courses"); setShowModuleModal(true); }}
                   className="glass-strong p-6 text-left glass-hover"
                 >
                   <FolderPlus className="w-8 h-8 text-[#b24760] mb-3" />
-                  <h4 className="font-medium text-[#1a1a2e]">Add Module</h4>
-                  <p className="text-sm text-[#6b6b7b] mt-1">Create a new module</p>
+                  <h4 className="font-medium text-[#1a1a2e]">{t("dashboard.addModule")}</h4>
+                  <p className="text-sm text-[#6b6b7b] mt-1">{t("admin.createNewModule")}</p>
                 </button>
                 <button
                   onClick={() => setActiveTab("activity")}
                   className="glass-strong p-6 text-left glass-hover"
                 >
                   <BarChart3 className="w-8 h-8 text-[#b24760] mb-3" />
-                  <h4 className="font-medium text-[#1a1a2e]">View Activity</h4>
-                  <p className="text-sm text-[#6b6b7b] mt-1">Monitor platform activity</p>
+                  <h4 className="font-medium text-[#1a1a2e]">{t("admin.viewActivity")}</h4>
+                  <p className="text-sm text-[#6b6b7b] mt-1">{t("admin.monitorActivity")}</p>
                 </button>
               </div>
             </>
@@ -303,7 +309,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search students..."
+                    placeholder={t("admin.searchStudents")}
                     className="w-full pl-10 pr-4 py-2.5 glass-input text-sm"
                   />
                 </div>
@@ -314,11 +320,11 @@ export default function AdminDashboard() {
                   <table className="min-w-[720px] w-full">
                     <thead>
                       <tr className="border-b border-[#f5d0d8]">
-                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">ENSAM Code</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Email</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Year</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Actions</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.email")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -338,7 +344,7 @@ export default function AdminDashboard() {
                               onClick={() => {
                                 setGrantError("");
                                 if (!u.yearId) {
-                                  setGrantError("Selected student is missing a year assignment.");
+                                  setGrantError(t("admin.missingYear"));
                                   setGrantEnsamCode(u.ensamCode || "");
                                   setShowGrantModal(true);
                                   return;
@@ -369,7 +375,7 @@ export default function AdminDashboard() {
                   </table>
                 </div>
                 {studentsData?.users.length === 0 && (
-                  <div className="p-8 text-center text-[#6b6b7b]">No students found</div>
+                  <div className="p-8 text-center text-[#6b6b7b]">{t("admin.noStudentsFound")}</div>
                 )}
               </div>
             </>
@@ -385,7 +391,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search représentants..."
+                    placeholder={t("admin.searchReps")}
                     className="w-full pl-10 pr-4 py-2.5 glass-input text-sm"
                   />
                 </div>
@@ -394,7 +400,7 @@ export default function AdminDashboard() {
                   className="btn-primary flex items-center gap-2 text-sm"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Grant Access
+                  {t("admin.grantAccess")}
                 </button>
               </div>
 
@@ -403,11 +409,11 @@ export default function AdminDashboard() {
                   <table className="min-w-[720px] w-full">
                     <thead>
                       <tr className="border-b border-[#f5d0d8]">
-                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Name</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">ENSAM Code</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Year</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Status</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">Actions</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -426,7 +432,7 @@ export default function AdminDashboard() {
                               ? "bg-green-100 text-green-700"
                               : "bg-orange-100 text-orange-700"
                           }`}>
-                            {u.isApproved ? "Active" : "Pending"}
+                            {u.isApproved ? t("common.active") : t("common.pending")}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -434,7 +440,7 @@ export default function AdminDashboard() {
                             onClick={() => revokeMutation.mutate({ userId: u.id })}
                             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100"
                           >
-                            Revoke
+                            {t("admin.revoke")}
                           </button>
                         </td>
                       </tr>
@@ -443,7 +449,7 @@ export default function AdminDashboard() {
                   </table>
                 </div>
                 {repsData?.users.length === 0 && (
-                  <div className="p-8 text-center text-[#6b6b7b]">No représentants found</div>
+                  <div className="p-8 text-center text-[#6b6b7b]">{t("admin.noRepsFound")}</div>
                 )}
               </div>
             </>
@@ -458,14 +464,14 @@ export default function AdminDashboard() {
                   className="btn-primary flex items-center gap-2 text-sm"
                 >
                   <FolderPlus className="w-4 h-4" />
-                  Add Module
+                  {t("dashboard.addModule")}
                 </button>
                 <button
                   onClick={() => setShowElementModal(true)}
                   className="btn-glass flex items-center gap-2 text-sm"
                 >
                   <FileText className="w-4 h-4" />
-                  Add Element
+                  {t("dashboard.addElement")}
                 </button>
               </div>
               <div className="glass-strong p-8 text-center text-[#6b6b7b]">
@@ -507,7 +513,7 @@ export default function AdminDashboard() {
               ))}
               {activityLogs?.length === 0 && (
                 <div className="glass-strong p-8 text-center text-[#6b6b7b]">
-                  No activity recorded yet
+                  {t("admin.noActivity")}
                 </div>
               )}
             </div>
@@ -520,34 +526,34 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
             <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">
-              Grant Représentant Access
+              {t("admin.grantRepAccess")}
             </h3>
             <form onSubmit={handleGrant} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Student ENSAM Code</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("admin.studentEnsamCode")}</label>
                 <input
                   type="text"
                   value={grantEnsamCode}
                   onChange={(e) => setGrantEnsamCode(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="Type the student code (e.g. AM1234)"
+                  placeholder={t("admin.searchPrompt")}
                   required
                 />
                 {grantSearching && (
-                  <p className="text-xs text-[#6b6b7b] mt-2">Searching…</p>
+                  <p className="text-xs text-[#6b6b7b] mt-2">{t("admin.searching")}</p>
                 )}
                 {!grantSearching && grantEnsamCode && !grantCandidate && (
                   <p className="text-xs text-red-600 mt-2">
-                    No student found with that ENSAM code.
+                    {t("admin.noStudentFound")}
                   </p>
                 )}
                 {grantCandidate && (
                   <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
                     <p className="font-medium">
-                      Found: {grantCandidate.name} ({grantCandidate.ensamCode})
+                      {t("admin.found")}: {grantCandidate.name} ({grantCandidate.ensamCode})
                     </p>
                     <p className="mt-1">
-                      Year: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
+                      {t("common.year")}: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
                       {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
                     </p>
                   </div>
@@ -564,10 +570,10 @@ export default function AdminDashboard() {
                   onClick={() => setShowGrantModal(false)}
                   className="flex-1 btn-glass"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Grant Access
+                  {t("admin.grantAccess")}
                 </button>
               </div>
             </form>
@@ -579,7 +585,7 @@ export default function AdminDashboard() {
       {showModuleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Add Module</h3>
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("dashboard.addModule")}</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -594,7 +600,7 @@ export default function AdminDashboard() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Name</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
                 <input
                   type="text"
                   value={moduleName}
@@ -604,7 +610,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Year</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.year")}</label>
                 <select
                   value={moduleYear}
                   onChange={(e) => {
@@ -614,7 +620,7 @@ export default function AdminDashboard() {
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
                 >
-                  <option value="">Select year</option>
+                  <option value="">{t("common.selectYear")}</option>
                   {years?.map((y) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
@@ -622,13 +628,13 @@ export default function AdminDashboard() {
               </div>
               {years?.find((y) => y.id === moduleYear)?.hasSectors && (
                 <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Sector (optional)</label>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.sector")} ({t("common.optional")})</label>
                   <select
                     value={moduleSector}
                     onChange={(e) => setModuleSector(e.target.value ? Number(e.target.value) : "")}
                     className="w-full px-4 py-2.5 glass-input text-sm"
                   >
-                    <option value="">All sectors</option>
+                    <option value="">{t("admin.allSectors")}</option>
                   </select>
                 </div>
               )}
@@ -638,10 +644,10 @@ export default function AdminDashboard() {
                   onClick={() => setShowModuleModal(false)}
                   className="flex-1 btn-glass"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Create
+                  {t("common.create")}
                 </button>
               </div>
             </form>
@@ -653,7 +659,7 @@ export default function AdminDashboard() {
       {showElementModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Add Element</h3>
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("dashboard.addElement")}</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -667,7 +673,7 @@ export default function AdminDashboard() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Name</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
                 <input
                   type="text"
                   value={elementName}
@@ -677,14 +683,14 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Module</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.module")}</label>
                 <select
                   value={elementModule}
                   onChange={(e) => setElementModule(e.target.value ? Number(e.target.value) : "")}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
                 >
-                  <option value="">Select module</option>
+                  <option value="">{t("dashboard.selectModule")}</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
@@ -693,10 +699,10 @@ export default function AdminDashboard() {
                   onClick={() => setShowElementModal(false)}
                   className="flex-1 btn-glass"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Create
+                  {t("common.create")}
                 </button>
               </div>
             </form>
@@ -708,22 +714,22 @@ export default function AdminDashboard() {
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-sm animate-fadeInUp">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-2">Confirm Delete</h3>
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-2">{t("admin.confirmDelete")}</h3>
             <p className="text-sm text-[#6b6b7b] mb-6">
-              Are you sure you want to delete this user? This action cannot be undone.
+              {t("admin.deleteUserConfirm")}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="flex-1 btn-glass"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 onClick={() => deleteUserMutation.mutate({ id: deleteConfirm })}
                 className="flex-1 px-6 py-3 rounded-full font-medium text-white bg-red-500 hover:bg-red-600 transition-all"
               >
-                Delete
+                {t("common.delete")}
               </button>
             </div>
           </div>

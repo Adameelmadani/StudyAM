@@ -17,6 +17,8 @@ import {
   Link2,
   X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
@@ -46,6 +48,7 @@ export default function Dashboard() {
     isAdmin,
     logout,
   } = useAuth();
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState<number | "">("");
   const [selectedSector, setSelectedSector] = useState<number | "">("");
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
@@ -274,18 +277,18 @@ export default function Dashboard() {
             className="nav-item active w-full"
           >
             <LayoutDashboard className="w-5 h-5" />
-            {sidebarOpen && <span>Dashboard</span>}
+            {sidebarOpen && <span>{t("common.dashboard")}</span>}
           </button>
           <button
             onClick={() => scrollToSection("courses")}
             className="nav-item w-full"
           >
             <BookOpen className="w-5 h-5" />
-            {sidebarOpen && <span>My Courses</span>}
+            {sidebarOpen && <span>{t("dashboard.myCourses")}</span>}
           </button>
           <button onClick={() => scrollToSection("settings")} className="nav-item w-full">
             <Settings className="w-5 h-5" />
-            {sidebarOpen && <span>Settings</span>}
+            {sidebarOpen && <span>{t("common.settings")}</span>}
           </button>
         </nav>
 
@@ -295,7 +298,7 @@ export default function Dashboard() {
             className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>Logout</span>}
+            {sidebarOpen && <span>{t("common.logout")}</span>}
           </button>
           {sidebarOpen && (
             <div className="mt-3 pt-3 border-t border-[#f5d0d8]">
@@ -338,16 +341,19 @@ export default function Dashboard() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <div id="dashboard-section" />
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#1a1a2e]">
-              Welcome, {user.name || "Student"}
-            </h1>
-            <p className="text-[#6b6b7b] mt-1">
-              Year {selectedYearData?.name || "..."}
-              {selectedSector && sectors
-                ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
-                : ""}
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-[#1a1a2e]">
+                {t("dashboard.welcomeUser", { name: user.name || "Student" })}
+              </h1>
+              <p className="text-[#6b6b7b] mt-1">
+                {t("common.year")} {selectedYearData?.name || "..."}
+                {selectedSector && sectors
+                  ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
+                  : ""}
+              </p>
+            </div>
+            <LanguageSwitcher />
           </div>
 
           {/* Year & Sector Selector */}
@@ -355,7 +361,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                  Academic Year
+                  {t("dashboard.academicYear")}
                 </label>
                 <select
                   value={selectedYear}
@@ -367,7 +373,7 @@ export default function Dashboard() {
                   }}
                   className="px-4 py-2.5 glass-input text-sm min-w-[160px]"
                 >
-                  <option value="">Select year</option>
+                  <option value="">{t("common.selectYear")}</option>
                   {years?.map((y) => (
                     <option key={y.id} value={y.id}>{y.name}</option>
                   ))}
@@ -377,7 +383,7 @@ export default function Dashboard() {
               {showSectorSelector && (
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    Sector
+                    {t("common.sector")}
                   </label>
                   <select
                     value={selectedSector}
@@ -388,7 +394,7 @@ export default function Dashboard() {
                     }}
                     className="px-4 py-2.5 glass-input text-sm min-w-[200px]"
                   >
-                    <option value="">Select sector</option>
+                    <option value="">{t("common.selectSector")}</option>
                     {sectors?.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -409,7 +415,7 @@ export default function Dashboard() {
                 }}
                 className="flex items-center gap-1 text-sm text-[#b24760] mb-4 hover:underline"
               >
-                <ChevronRight className="w-4 h-4 rotate-180" /> Back to modules
+                <ChevronRight className="w-4 h-4 rotate-180" /> {t("common.backToModules")}
               </button>
 
               <div className="glass-strong p-6 mb-6">
@@ -417,7 +423,7 @@ export default function Dashboard() {
                   {moduleElements?.find((e) => e.id === selectedElement)?.name}
                 </h2>
                 <p className="text-sm text-[#6b6b7b]">
-                  {elementDocs?.length || 0} document(s) available
+                  {t("dashboard.docsAvailable", { count: elementDocs?.length || 0 })}
                 </p>
               </div>
 
@@ -438,10 +444,10 @@ export default function Dashboard() {
                             </div>
                             <div>
                               <p className="font-medium text-[#1a1a2e]">
-                                {typeLabels[type]}
+                                {t(`types.${type}`)}
                               </p>
                               <p className="text-xs text-[#6b6b7b]">
-                                {count} item{count === 1 ? "" : "s"}
+                                {count} {count === 1 ? t("common.item") : t("common.items")}
                               </p>
                             </div>
                           </div>
@@ -450,7 +456,7 @@ export default function Dashboard() {
                     })}
                   </div>
                   <p className="text-xs text-[#6b6b7b]">
-                    Select a folder to view documents.
+                    {t("dashboard.selectFolderDesc")}
                   </p>
                 </>
               ) : (
@@ -460,7 +466,7 @@ export default function Dashboard() {
                       onClick={() => setActiveDocType(null)}
                       className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
                     >
-                      <ChevronRight className="w-4 h-4 rotate-180" /> Back to folders
+                      <ChevronRight className="w-4 h-4 rotate-180" /> {t("common.backToFolders")}
                     </button>
                     {canManageDocs && (
                       <button
@@ -468,7 +474,7 @@ export default function Dashboard() {
                         className="btn-primary flex items-center gap-2 text-sm"
                       >
                         <Link2 className="w-4 h-4" />
-                        Add Google Drive URL
+                        {t("dashboard.addDriveUrl")}
                       </button>
                     )}
                   </div>
@@ -493,10 +499,10 @@ export default function Dashboard() {
                                   typeColors[doc.type]
                                 }`}
                               >
-                                {typeLabels[doc.type]}
+                                {t(`types.${doc.type}`)}
                               </span>
                               <span className="text-xs text-[#6b6b7b]">
-                                by {doc.uploaderName}
+                                {t("dashboard.by")} {doc.uploaderName}
                               </span>
                             </div>
                           </div>
@@ -506,7 +512,7 @@ export default function Dashboard() {
                             rel="noopener noreferrer"
                             className="btn-glass text-xs py-2 px-4 shrink-0"
                           >
-                            Open
+                            {t("common.open")}
                           </a>
                         </div>
                       ))}
@@ -515,7 +521,7 @@ export default function Dashboard() {
                     <div className="glass-strong p-12 text-center">
                       <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
                       <p className="text-[#6b6b7b]">
-                        No {typeLabels[activeDocType].toLowerCase()} documents yet
+                        {t("dashboard.noDocsYet", { type: t(`types.${activeDocType}`).toLowerCase() })}
                       </p>
                     </div>
                   )}
@@ -531,14 +537,14 @@ export default function Dashboard() {
                     className="btn-primary text-sm disabled:opacity-60"
                     disabled={!selectedYear}
                   >
-                    Add Module
+                    {t("dashboard.addModule")}
                   </button>
                   <button
                     onClick={openElementModal}
                     className="btn-glass text-sm disabled:opacity-60"
                     disabled={!modulesList || modulesList.length === 0}
                   >
-                    Add Element
+                    {t("dashboard.addElement")}
                   </button>
                 </div>
               )}
@@ -560,15 +566,15 @@ export default function Dashboard() {
                               {mod.name}
                             </h3>
                             <p className="text-sm text-[#6b6b7b]">
-                              {mod.description || "Click to view elements"}
+                              {mod.description || t("dashboard.openFolder")}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
                             {moduleElements && expandedModule === mod.id
-                              ? `${moduleElements.length} elements`
-                              : "Open folder"}
+                              ? t("dashboard.elementsCount", { count: moduleElements.length })
+                              : t("dashboard.openFolder")}
                           </span>
                           <ChevronDown
                             className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
@@ -600,7 +606,7 @@ export default function Dashboard() {
                                         {el.name}
                                       </h4>
                                       <p className="text-xs text-[#6b6b7b]">
-                                        {el.description || "Open element folder"}
+                                        {el.description || t("dashboard.openFolder")}
                                       </p>
                                     </div>
                                   </div>
@@ -609,7 +615,7 @@ export default function Dashboard() {
                             </div>
                           ) : (
                             <p className="text-sm text-[#6b6b7b] text-center py-4">
-                              No elements in this module yet
+                              {t("dashboard.noModules")}
                             </p>
                           )}
                         </div>
@@ -620,17 +626,17 @@ export default function Dashboard() {
               ) : selectedYear ? (
                 <div className="glass-strong p-12 text-center mb-10">
                   <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                  <p className="text-[#6b6b7b] mb-1">No modules available yet</p>
+                  <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
                   <p className="text-sm text-[#6b6b7b]/60">
-                    Course materials will be added soon
+                    {t("dashboard.noModulesDesc")}
                   </p>
                 </div>
               ) : (
                 <div className="glass-strong p-12 text-center mb-10">
                   <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                  <p className="text-[#6b6b7b] mb-1">Select a year to browse courses</p>
+                  <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
                   <p className="text-sm text-[#6b6b7b]/60">
-                    Choose your academic year and sector from the selector above
+                    {t("dashboard.selectYearDesc")}
                   </p>
                 </div>
               )}
@@ -639,7 +645,7 @@ export default function Dashboard() {
               {recentDocs && recentDocs.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">
-                    Recent Uploads
+                    {t("dashboard.recentUploads")}
                   </h3>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {recentDocs.map((doc) => (
@@ -672,22 +678,22 @@ export default function Dashboard() {
             </>
           )}
           <section id="settings-section" className="mt-12">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">Settings</h3>
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("common.settings")}</h3>
             <div className="glass-strong p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">Full name</p>
+                <p className="text-xs text-[#6b6b7b]">{t("common.fullName")}</p>
                 <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.name || "-"}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">Email</p>
+                <p className="text-xs text-[#6b6b7b]">{t("common.email")}</p>
                 <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.email || "-"}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">ENSAM code</p>
+                <p className="text-xs text-[#6b6b7b]">{t("common.ensamCode")}</p>
                 <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.ensamCode || "-"}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">Academic track</p>
+                <p className="text-xs text-[#6b6b7b]">{t("dashboard.academicTrack")}</p>
                 <p className="text-sm font-medium text-[#1a1a2e] break-words">
                   {selectedYearData?.name || "N/A"}
                   {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
@@ -695,7 +701,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-xs text-[#6b6b7b] mt-3">
-              Representative access is granted by admins through the admin dashboard.
+              {t("dashboard.repAccessDisclaimer")}
             </p>
           </section>
         </div>
@@ -706,9 +712,9 @@ export default function Dashboard() {
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Google Drive URL</h3>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveUrl")}</h3>
                 <p className="text-xs text-[#6b6b7b] mt-1">
-                  Folder: {typeLabels[linkType]}
+                  {t("dashboard.folder")}: {t(`types.${linkType}`)}
                 </p>
               </div>
               <button onClick={closeLinkModal} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
@@ -737,13 +743,13 @@ export default function Dashboard() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Title</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.title")}</label>
                 <input
                   type="text"
                   value={linkTitle}
                   onChange={(e) => setLinkTitle(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="Document title"
+                  placeholder={t("common.title")}
                   required
                 />
               </div>
@@ -765,10 +771,10 @@ export default function Dashboard() {
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={closeLinkModal} className="flex-1 btn-glass">
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Save Link
+                  {t("dashboard.saveLink")}
                 </button>
               </div>
             </form>
@@ -781,9 +787,9 @@ export default function Dashboard() {
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Module</h3>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addModule")}</h3>
                 <p className="text-xs text-[#6b6b7b] mt-1">
-                  Year: {selectedYearData?.name || "Select a year first"}
+                  {t("common.year")}: {selectedYearData?.name || t("common.selectYear")}
                   {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
                 </p>
               </div>
@@ -812,13 +818,13 @@ export default function Dashboard() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Module name</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.moduleName")}</label>
                 <input
                   type="text"
                   value={moduleName}
                   onChange={(e) => setModuleName(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="Module title"
+                  placeholder={t("dashboard.moduleName")}
                   required
                 />
               </div>
@@ -829,10 +835,10 @@ export default function Dashboard() {
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModuleModal(false)} className="flex-1 btn-glass">
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Save Module
+                  {t("common.save")}
                 </button>
               </div>
             </form>
@@ -845,12 +851,12 @@ export default function Dashboard() {
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Element</h3>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addElement")}</h3>
                 <p className="text-xs text-[#6b6b7b] mt-1">
                   Module:{" "}
                   {elementModule
                     ? modulesList?.find((mod) => mod.id === elementModule)?.name || "Selected module"
-                    : "Select a module"}
+                    : t("dashboard.selectModule")}
                 </p>
               </div>
               <button onClick={() => setShowElementModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
@@ -877,25 +883,25 @@ export default function Dashboard() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Element name</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.elementName")}</label>
                 <input
                   type="text"
                   value={elementName}
                   onChange={(e) => setElementName(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="Element title"
+                  placeholder={t("dashboard.elementName")}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Module</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.folder")}</label>
                 <select
                   value={elementModule}
                   onChange={(e) => setElementModule(e.target.value ? Number(e.target.value) : "")}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
                 >
-                  <option value="">Select module</option>
+                  <option value="">{t("dashboard.selectModule")}</option>
                   {modulesList?.map((mod) => (
                     <option key={mod.id} value={mod.id}>
                       {mod.name}
@@ -910,10 +916,10 @@ export default function Dashboard() {
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowElementModal(false)} className="flex-1 btn-glass">
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Save Element
+                  {t("common.save")}
                 </button>
               </div>
             </form>

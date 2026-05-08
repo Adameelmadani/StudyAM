@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router";
 import { GraduationCap, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function NotFound() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen page-bg flex items-center justify-center">
@@ -12,14 +14,14 @@ export default function NotFound() {
         </div>
         <h1 className="text-6xl font-bold text-[#1a1a2e] mb-2">404</h1>
         <p className="text-lg text-[#6b6b7b] mb-8">
-          This page doesn&apos;t exist
+          {t("notFound.desc")}
         </p>
         <button
           onClick={() => navigate("/")}
           className="btn-primary inline-flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          {t("notFound.backHome")}
         </button>
       </div>
     </div>

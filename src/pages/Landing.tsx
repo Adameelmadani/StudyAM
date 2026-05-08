@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router";
 import { Calendar, GitBranch, Users, BookOpen, GraduationCap, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-white">
@@ -20,17 +23,18 @@ export default function Landing() {
             </span>
           </button>
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <button
               onClick={() => navigate("/login")}
               className="btn-glass text-sm py-2 px-5"
             >
-              Sign In
+              {t("common.signIn")}
             </button>
             <button
               onClick={() => navigate("/login")}
               className="btn-primary text-sm py-2 px-5"
             >
-              Get Started
+              {t("common.getStarted")}
             </button>
           </div>
         </div>
@@ -47,24 +51,23 @@ export default function Landing() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-rose mb-6 border border-white/30">
               <BookOpen className="w-4 h-4 text-[#ffffff]" />
               <span className="text-sm font-medium text-[#ffffff]">
-                ENSAM Course Platform
+                {t("landing.heroTag")}
               </span>
             </div>
             <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
-              Your Courses,
+              {t("landing.heroTitle").split(',')[0]},
               <br />
-              <span className="text-[#f5d0d8]">Organized</span>
+              <span className="text-[#f5d0d8]">{t("landing.heroTitle").split(',')[1]}</span>
             </h1>
             <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-lg">
-              Access all ENSAM course materials across every year and sector.
-              Built by students, for students.
+              {t("landing.heroDesc")}
             </p>
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => navigate("/login")}
                 className="btn-primary flex items-center gap-2 border border-white/30"
               >
-                Get Started
+                {t("common.getStarted")}
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
@@ -73,7 +76,7 @@ export default function Landing() {
                 }}
                 className="px-6 py-3 rounded-full font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 transition-all"
               >
-                Learn More
+                {t("common.learnMore")}
               </button>
             </div>
           </div>
@@ -85,11 +88,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a2e] mb-4">
-              Everything You Need
+              {t("landing.featuresTitle")}
             </h2>
             <p className="text-[#6b6b7b] max-w-xl mx-auto">
-              StudyAM brings together all your course materials in one place,
-              organized by year and sector.
+              {t("landing.featuresDesc")}
             </p>
           </div>
 
@@ -100,11 +102,10 @@ export default function Landing() {
                 <Calendar className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-[#1a1a2e] mb-3">
-                5 Academic Years
+                {t("landing.feature1Title")}
               </h3>
               <p className="text-[#6b6b7b] leading-relaxed">
-                From 1A fundamentals to 5A specialization, all course materials
-                organized by year.
+                {t("landing.feature1Desc")}
               </p>
             </div>
 
@@ -114,11 +115,10 @@ export default function Landing() {
                 <GitBranch className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-[#1a1a2e] mb-3">
-                Sector-Based Access
+                {t("landing.feature2Title")}
               </h3>
               <p className="text-[#6b6b7b] leading-relaxed">
-                Years 3A–5A are organized by sector, so you only see courses
-                relevant to your specialization.
+                {t("landing.feature2Desc")}
               </p>
             </div>
 
@@ -128,11 +128,10 @@ export default function Landing() {
                 <Users className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-[#1a1a2e] mb-3">
-                Représentant Uploads
+                {t("landing.feature3Title")}
               </h3>
               <p className="text-[#6b6b7b] leading-relaxed">
-                Class representatives upload and organize course materials,
-                exams, and resources for their peers.
+                {t("landing.feature3Desc")}
               </p>
             </div>
           </div>
@@ -153,10 +152,10 @@ export default function Landing() {
             </span>
           </button>
           <p className="text-[#dbdbdb] text-base mb-2">
-            ENSAM Course Platform
+            {t("landing.footerTag")}
           </p>
           <p className="text-[#cbcbcb]/60 text-sm">
-            Built by students, for students
+            {t("landing.footerBuiltBy")}
           </p>
         </div>
       </footer>

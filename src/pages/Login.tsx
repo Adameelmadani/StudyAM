@@ -14,12 +14,14 @@ import {
   LogIn,
   ArrowLeft,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type AuthMode = "login" | "register";
 
-
 export default function Login() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -71,7 +73,7 @@ export default function Login() {
       window.location.href = destination;
     } catch (err: unknown) {
       const error = err as { message?: string };
-      setError(error.message || "Invalid credentials");
+      setError(error.message || t("login.invalidCredentials"));
     } finally {
       setLoading(false);
     }
@@ -82,15 +84,15 @@ export default function Login() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("login.passwordsDoNotMatch"));
       return;
     }
     if (!yearId) {
-      setError("Please select a year");
+      setError(t("login.selectYearError"));
       return;
     }
     if (showSector && !sectorId) {
-      setError("Please select a sector");
+      setError(t("login.selectSectorError"));
       return;
     }
 
@@ -108,7 +110,7 @@ export default function Login() {
       window.location.href = "/dashboard";
     } catch (err: unknown) {
       const error = err as { message?: string };
-      setError(error.message || "Registration failed");
+      setError(error.message || t("login.registrationFailed"));
     } finally {
       setLoading(false);
     }
@@ -131,21 +133,26 @@ export default function Login() {
           </h1>
         </button>
 
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Card */}
         <div className="glass-strong p-8">
           {mode === "login" && (
             <>
               <h2 className="text-xl font-semibold text-center text-[#1a1a2e] mb-2">
-                Welcome Back
+                {t("login.welcomeBack")}
               </h2>
               <p className="text-sm text-[#6b6b7b] text-center mb-6">
-                Sign in to access your courses
+                {t("login.signInDesc")}
               </p>
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    ENSAM Code
+                    {t("common.ensamCode")}
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
@@ -153,7 +160,7 @@ export default function Login() {
                       type="text"
                       value={ensamCode}
                       onChange={(e) => setEnsamCode(e.target.value)}
-                      placeholder="Enter your ENSAM code"
+                      placeholder={t("login.enterEnsamCode")}
                       className="w-full pl-10 pr-4 py-3 glass-input text-sm"
                       required
                     />
@@ -162,7 +169,7 @@ export default function Login() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    Password
+                    {t("common.password")}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
@@ -170,7 +177,7 @@ export default function Login() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
+                      placeholder={t("login.enterPassword")}
                       className="w-full pl-10 pr-12 py-3 glass-input text-sm"
                       required
                     />
@@ -196,18 +203,18 @@ export default function Login() {
                   className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   <LogIn className="w-4 h-4" />
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? t("login.signingIn") : t("common.signIn")}
                 </button>
               </form>
 
 
               <p className="text-center text-sm text-[#6b6b7b] mt-2">
-                Don&apos;t have an account?{" "}
+                {t("login.noAccount")}{" "}
                 <button
                   onClick={() => { setMode("register"); setError(""); }}
                   className="text-[#b24760] font-medium hover:underline"
                 >
-                  Register
+                  {t("common.register")}
                 </button>
               </p>
             </>
@@ -219,26 +226,26 @@ export default function Login() {
                 onClick={() => setMode("login")}
                 className="flex items-center gap-1 text-sm text-[#6b6b7b] hover:text-[#b24760] mb-6"
               >
-                <ArrowLeft className="w-4 h-4" /> Back
+                <ArrowLeft className="w-4 h-4" /> {t("common.back")}
               </button>
 
               <h2 className="text-xl font-semibold text-[#1a1a2e] mb-2">
-                Create your student account
+                {t("login.createAccount")}
               </h2>
               <p className="text-sm text-[#6b6b7b]">
-                Representative access is granted by admins through the dashboard.
+                {t("login.repAccessDesc")}
               </p>
 
               <form onSubmit={handleRegister} className="space-y-4 mt-6">
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    Full Name
+                    {t("common.fullName")}
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
+                    placeholder={t("login.enterFullName")}
                     className="w-full px-4 py-3 glass-input text-sm"
                     required
                   />
@@ -246,7 +253,7 @@ export default function Login() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    Student Email
+                    {t("common.email")}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
@@ -254,7 +261,7 @@ export default function Login() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your student email"
+                      placeholder={t("login.enterEmail")}
                       className="w-full pl-10 pr-4 py-3 glass-input text-sm"
                       required
                     />
@@ -263,7 +270,7 @@ export default function Login() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    ENSAM Code
+                    {t("common.ensamCode")}
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
@@ -271,7 +278,7 @@ export default function Login() {
                       type="text"
                       value={ensamCode}
                       onChange={(e) => setEnsamCode(e.target.value)}
-                      placeholder="Enter your ENSAM code"
+                      placeholder={t("login.enterEnsamCode")}
                       className="w-full pl-10 pr-4 py-3 glass-input text-sm"
                       required
                     />
@@ -281,13 +288,13 @@ export default function Login() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                      Password
+                      {t("common.password")}
                     </label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password"
+                      placeholder={t("common.password")}
                       className="w-full px-4 py-3 glass-input text-sm"
                       required
                       minLength={6}
@@ -295,13 +302,13 @@ export default function Login() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                      Confirm
+                      {t("common.confirmPassword")}
                     </label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm"
+                      placeholder={t("common.confirmPassword")}
                       className="w-full px-4 py-3 glass-input text-sm"
                       required
                     />
@@ -311,7 +318,7 @@ export default function Login() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                      Year
+                      {t("common.year")}
                     </label>
                     <div className="relative">
                       <select
@@ -323,7 +330,7 @@ export default function Login() {
                         className="w-full px-4 py-3 glass-input text-sm appearance-none"
                         required
                       >
-                        <option value="">Select year</option>
+                        <option value="">{t("common.selectYear")}</option>
                         {years?.map((y) => (
                           <option key={y.id} value={y.id}>{y.name}</option>
                         ))}
@@ -335,7 +342,7 @@ export default function Login() {
                   {showSector && (
                     <div>
                       <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                        Sector
+                        {t("common.sector")}
                       </label>
                       <div className="relative">
                         <select
@@ -344,7 +351,7 @@ export default function Login() {
                           className="w-full px-4 py-3 glass-input text-sm appearance-none"
                           required
                         >
-                          <option value="">Select sector</option>
+                          <option value="">{t("common.selectSector")}</option>
                           {sectors?.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                           ))}
@@ -367,17 +374,17 @@ export default function Login() {
                   className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   <UserPlus className="w-4 h-4" />
-                  {loading ? "Creating account..." : "Create Account"}
+                  {loading ? t("login.creatingAccount") : t("common.register")}
                 </button>
               </form>
 
               <p className="text-center text-sm text-[#6b6b7b] mt-4">
-                Already have an account?{" "}
+                {t("login.alreadyHaveAccount")}{" "}
                 <button
                   onClick={() => { setMode("login"); setError(""); }}
                   className="text-[#b24760] font-medium hover:underline"
                 >
-                  Sign in
+                  {t("common.signIn")}
                 </button>
               </p>
             </>

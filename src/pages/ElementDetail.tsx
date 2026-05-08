@@ -13,6 +13,8 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
@@ -25,16 +27,17 @@ const typeColors: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
-  cours: "Cours",
-  exam: "Exams",
-  test: "Tests",
-  tp: "TP",
-  resume: "Résumé",
+  cours: "types.cours",
+  exam: "types.exam",
+  test: "types.test",
+  tp: "types.tp",
+  resume: "types.resume",
 };
 
 export default function ElementDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const {
     isAuthenticated,
     isLoading: authLoading,
@@ -123,13 +126,13 @@ export default function ElementDetail() {
         <nav className="px-2 space-y-1">
           <button onClick={() => navigate("/dashboard")} className="nav-item w-full">
             <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
+            <span>{t("common.dashboard")}</span>
           </button>
         </nav>
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <button onClick={logout} className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50">
             <LogOut className="w-5 h-5" />
-            <span>Logout</span>
+            <span>{t("common.logout")}</span>
           </button>
         </div>
       </aside>
@@ -138,21 +141,24 @@ export default function ElementDetail() {
       <main className="flex-1 ml-64">
         <div className="p-8 max-w-5xl mx-auto">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-[#6b6b7b] mb-6">
-            <button onClick={() => navigate("/dashboard")} className="hover:text-[#b24760]">
-              Dashboard
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-[#1a1a2e] font-medium">Element {elementId}</span>
-          </nav>
+          <div className="flex items-center justify-between mb-6">
+            <nav className="flex items-center gap-2 text-sm text-[#6b6b7b]">
+              <button onClick={() => navigate("/dashboard")} className="hover:text-[#b24760]">
+                {t("common.dashboard")}
+              </button>
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-[#1a1a2e] font-medium">{t("dashboard.elementName")} {elementId}</span>
+            </nav>
+            <LanguageSwitcher />
+          </div>
 
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[#1a1a2e]">
-              Course Documents
+              {t("admin.courses")}
             </h1>
             <p className="text-sm text-[#6b6b7b] mt-1">
-              {documentsList?.length || 0} document(s) available
+              {t("dashboard.docsAvailable", { count: documentsList?.length || 0 })}
             </p>
           </div>
 
@@ -173,10 +179,10 @@ export default function ElementDetail() {
                         </div>
                         <div>
                           <p className="font-medium text-[#1a1a2e]">
-                            {typeLabels[type]}
+                            {t(typeLabels[type])}
                           </p>
                           <p className="text-xs text-[#6b6b7b]">
-                            {count} item{count === 1 ? "" : "s"}
+                            {count} {count === 1 ? t("common.item") : t("common.items")}
                           </p>
                         </div>
                       </div>
@@ -185,7 +191,7 @@ export default function ElementDetail() {
                 })}
               </div>
               <p className="text-xs text-[#6b6b7b]">
-                Select a folder to view documents.
+                {t("dashboard.selectFolderDesc")}
               </p>
             </>
           ) : (
@@ -195,7 +201,7 @@ export default function ElementDetail() {
                   onClick={() => setActiveDocType(null)}
                   className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
                 >
-                  <ChevronRight className="w-4 h-4 rotate-180" /> Back to folders
+                  <ChevronRight className="w-4 h-4 rotate-180" /> {t("common.backToFolders")}
                 </button>
                 {canManageDocs && (
                   <button
@@ -203,7 +209,7 @@ export default function ElementDetail() {
                     className="btn-primary flex items-center gap-2 text-sm"
                   >
                     <Link2 className="w-4 h-4" />
-                    Add Google Drive URL
+                    {t("dashboard.addDriveUrl")}
                   </button>
                 )}
               </div>
@@ -219,9 +225,9 @@ export default function ElementDetail() {
                         <h4 className="font-medium text-[#1a1a2e] truncate">{doc.title}</h4>
                         <div className="flex items-center gap-3 mt-1.5">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${typeColors[doc.type]}`}>
-                            {typeLabels[doc.type]}
+                            {t(typeLabels[doc.type])}
                           </span>
-                          <span className="text-xs text-[#6b6b7b]">by {doc.uploaderName}</span>
+                          <span className="text-xs text-[#6b6b7b]">{t("dashboard.by")} {doc.uploaderName}</span>
                           <span className="text-xs text-[#6b6b7b]/60">
                             {new Date(doc.createdAt).toLocaleDateString()}
                           </span>
@@ -234,7 +240,7 @@ export default function ElementDetail() {
                         className="btn-glass flex items-center gap-1.5 text-sm shrink-0"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Open
+                        {t("common.open")}
                       </a>
                     </div>
                   ))}
@@ -243,7 +249,7 @@ export default function ElementDetail() {
                 <div className="glass-strong p-12 text-center">
                   <FileText className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
                   <p className="text-[#6b6b7b]">
-                    No {typeLabels[activeDocType].toLowerCase()} documents yet
+                    {t("dashboard.noDocsYet", { type: t(typeLabels[activeDocType]).toLowerCase() })}
                   </p>
                 </div>
               )}
@@ -258,9 +264,9 @@ export default function ElementDetail() {
           <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">Add Google Drive URL</h3>
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveUrl")}</h3>
                 <p className="text-xs text-[#6b6b7b] mt-1">
-                  Folder: {typeLabels[linkType]}
+                  {t("dashboard.folder")}: {t(typeLabels[linkType])}
                 </p>
               </div>
               <button onClick={closeLinkModal} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
@@ -285,14 +291,14 @@ export default function ElementDetail() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Title</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.title")}</label>
                 <input
                   type="text"
                   value={linkTitle}
                   onChange={(e) => setLinkTitle(e.target.value)}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
-                  placeholder="Document title"
+                  placeholder={t("common.title")}
                 />
               </div>
               <div>
@@ -313,10 +319,10 @@ export default function ElementDetail() {
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={closeLinkModal} className="flex-1 btn-glass">
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className="flex-1 btn-primary">
-                  Save Link
+                  {t("dashboard.saveLink")}
                 </button>
               </div>
             </form>
