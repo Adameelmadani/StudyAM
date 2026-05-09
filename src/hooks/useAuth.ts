@@ -69,7 +69,8 @@ export function useAuth() {
   }, [oauthUser, localUser]);
 
   const isAdmin = user?.role === "admin";
-  const isRepresentative = user?.role === "representative" && user?.isApproved;
+  const isPromoRepresentative = user?.role === "promo_representative" && user?.isApproved;
+  const isRepresentative = (user?.role === "representative" || user?.role === "promo_representative") && user?.isApproved;
   const isStudent = user?.role === "student";
 
   const logout = useCallback(() => {
@@ -83,6 +84,7 @@ export function useAuth() {
     isAuthenticated: !!user,
     isLoading: oauthLoading || localLoading,
     isAdmin,
+    isPromoRepresentative,
     isRepresentative,
     isStudent,
     logout,

@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { createRouter, adminQuery, authedQuery } from "../middleware";
+import { createRouter, representativeQuery, authedQuery } from "../middleware";
 import { getDb } from "../queries/connection";
 import { activityLog, users } from "@db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const activityRouter = createRouter({
-  list: adminQuery
+  list: representativeQuery
     .input(
       z
         .object({
@@ -16,11 +17,45 @@ export const activityRouter = createRouter({
         })
         .optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = getDb();
       const limit = input?.limit || 50;
 
+      const isPromoRep = ctx.user.role === "promo_representative";
+      const isAdmin = ctx.user.role === "admin";
+
+      if (!isAdmin && !isPromoRep) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
       let logs;
+      
+      // If promo rep, we need to join with users to filter by year
+      if (isPromoRep) {
+        const query = db
+          .select({
+            log: activityLog,
+            performer: users,
+          })
+          .from(activityLog)
+          .innerJoin(users, eq(activityLog.performedBy, users.id))
+          .where(
+            and(
+              eq(users.yearId, ctx.user.yearId),
+              input?.entityType ? eq(activityLog.entityType, input.entityType) : undefined
+            )
+          )
+          .orderBy(desc(activityLog.createdAt))
+          .limit(limit);
+        
+        const results = await query;
+        return results.map(r => ({
+          ...r.log,
+          performerName: r.performer.name || "Unknown",
+        }));
+      }
+
+      // Admin logic
       if (input?.entityType) {
         logs = await db
           .select()

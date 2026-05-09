@@ -43,7 +43,8 @@
     "create": "Créer",
     "search": "Rechercher",
     "optional": "Optionnel",
-    "module": "Module"
+    "module": "Module",
+    "sectors": "Filières"
   },
   "types": {
     "cours": "Cours",
@@ -145,7 +146,12 @@
     "found": "Trouvé",
     "missingYear": "L'étudiant sélectionné n'a pas d'année assignée.",
     "noActivity": "Aucune activité enregistrée pour le moment",
-    "administrator": "Administrateur"
+    "administrator": "Administrateur",
+    "role": "Rôle",
+    "promoRepresentative": "Représentant de Promo",
+    "selectRole": "Sélectionner le rôle",
+    "representative": "Représentant",
+    "multiSectorNotice": "Cochez plusieurs filières si ce module est commun à plusieurs spécialisations."
   },
   "notFound": {
     "title": "Page non trouvée",

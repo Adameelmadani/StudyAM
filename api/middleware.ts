@@ -38,7 +38,7 @@ function requireRole(role: string) {
   });
 }
 
-// Helper to check if user is admin OR representative (approved)
+// Helper to check if user is admin OR representative (approved) OR promo_representative (approved)
 const requireRepresentative = t.middleware(async (opts) => {
   const { ctx, next } = opts;
 
@@ -50,7 +50,7 @@ const requireRepresentative = t.middleware(async (opts) => {
   }
 
   const isAdmin = ctx.user.role === "admin";
-  const isRep = ctx.user.role === "representative" && ctx.user.isApproved;
+  const isRep = (ctx.user.role === "representative" || ctx.user.role === "promo_representative") && ctx.user.isApproved;
 
   if (!isAdmin && !isRep) {
     throw new TRPCError({
@@ -62,6 +62,30 @@ const requireRepresentative = t.middleware(async (opts) => {
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
+const requirePromoRepresentative = t.middleware(async (opts) => {
+  const { ctx, next } = opts;
+
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: ErrorMessages.unauthenticated,
+    });
+  }
+
+  const isAdmin = ctx.user.role === "admin";
+  const isPromoRep = ctx.user.role === "promo_representative" && ctx.user.isApproved;
+
+  if (!isAdmin && !isPromoRep) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only approved promo representatives or admins can perform this action",
+    });
+  }
+
+  return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
 export const authedQuery = t.procedure.use(requireAuth);
 export const adminQuery = authedQuery.use(requireRole("admin"));
 export const representativeQuery = t.procedure.use(requireRepresentative);
+export const promoRepresentativeQuery = t.procedure.use(requirePromoRepresentative);

@@ -19,7 +19,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }).unique(),
   avatar: text("avatar"),
   passwordHash: varchar("passwordHash", { length: 255 }),
-  role: mysqlEnum("role", ["student", "representative", "admin"]).default("student").notNull(),
+  role: mysqlEnum("role", ["student", "representative", "promo_representative", "admin"]).default("student").notNull(),
   yearId: bigint("yearId", { mode: "number", unsigned: true }),
   sectorId: bigint("sectorId", { mode: "number", unsigned: true }),
   isApproved: boolean("isApproved").default(false),
@@ -67,6 +67,7 @@ export const modules = mysqlTable("modules", {
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
   yearId: bigint("yearId", { mode: "number", unsigned: true }).notNull(),
+  // Keep sectorId for backward compatibility or as the primary sector
   sectorId: bigint("sectorId", { mode: "number", unsigned: true }),
   icon: varchar("icon", { length: 50 }).default("book"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -74,6 +75,15 @@ export const modules = mysqlTable("modules", {
 
 export type Module = typeof modules.$inferSelect;
 export type InsertModule = typeof modules.$inferInsert;
+
+// ─── Module Sectors (junction) ───────────────────────────────────
+export const moduleSectors = mysqlTable("moduleSectors", {
+  id: serial("id").primaryKey(),
+  moduleId: bigint("moduleId", { mode: "number", unsigned: true }).notNull(),
+  sectorId: bigint("sectorId", { mode: "number", unsigned: true }).notNull(),
+});
+
+export type ModuleSector = typeof moduleSectors.$inferSelect;
 
 // ─── Elements ────────────────────────────────────────────────────
 export const elements = mysqlTable("elements", {

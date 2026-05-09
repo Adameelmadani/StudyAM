@@ -19,16 +19,19 @@ import {
   BarChart3,
   FolderPlus,
   UploadCloud,
+  ChevronDown,
+  ChevronRight,
+  Folder,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-type AdminTab = "dashboard" | "students" | "representatives" | "courses" | "activity";
+type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, isAdmin, isPromoRepresentative, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [showGrantModal, setShowGrantModal] = useState(false);
@@ -39,39 +42,76 @@ export default function AdminDashboard() {
   const [moduleName, setModuleName] = useState("");
   const [moduleYear, setModuleYear] = useState<number | "">("");
   const [moduleSector, setModuleSector] = useState<number | "">("");
+  const [moduleSectorsList, setModuleSectorsList] = useState<number[]>([]);
   const [elementName, setElementName] = useState("");
   const [elementModule, setElementModule] = useState<number | "">("");
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | "">("");
+  const [selectedSector, setSelectedSector] = useState<number | "">("");
+  const [expandedModule, setExpandedModule] = useState<number | null>(null);
+  const [selectedElement, setSelectedElement] = useState<number | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{
+    type: "module" | "element" | "document";
+    id: number;
+    title: string;
+  } | null>(null);
 
-  // Redirect if not admin
+  const canAccess = isAdmin || isPromoRepresentative;
+  const canManageCourses = isAdmin || (isPromoRepresentative && selectedYear === user?.yearId);
+
+  // Redirect if not authorized
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/login");
     }
-    if (!authLoading && isAuthenticated && !isAdmin) {
+    if (!authLoading && isAuthenticated && !canAccess) {
       navigate("/dashboard");
     }
-  }, [authLoading, isAuthenticated, isAdmin, navigate]);
+  }, [authLoading, isAuthenticated, canAccess, navigate]);
+
+  // Lock year for promo reps
+  useEffect(() => {
+    if (isPromoRepresentative && user?.yearId) {
+      setSelectedYear(user.yearId);
+    }
+  }, [isPromoRepresentative, user]);
 
   const utils = trpc.useUtils();
-  const { data: stats } = trpc.user.stats.useQuery(undefined, { enabled: isAdmin });
+  const { data: stats } = trpc.user.stats.useQuery(undefined, { enabled: canAccess });
   const { data: studentsData } = trpc.user.list.useQuery(
     { role: "student", search: searchQuery || undefined, limit: 50 },
-    { enabled: isAdmin && activeTab === "students" }
+    { enabled: canAccess && activeTab === "students" }
   );
   const { data: repsData } = trpc.user.list.useQuery(
     { role: "representative", search: searchQuery || undefined, limit: 50 },
-    { enabled: isAdmin && activeTab === "representatives" }
+    { enabled: canAccess && activeTab === "representatives" }
+  );
+  const { data: promoRepsData } = trpc.user.list.useQuery(
+    { role: "promo_representative", search: searchQuery || undefined, limit: 50 },
+    { enabled: canAccess && activeTab === "promo_reps" }
   );
   const grantSearchValue = grantEnsamCode.trim();
   const { data: grantSearchResults, isFetching: grantSearching } = trpc.user.list.useQuery(
     { role: "student", search: grantSearchValue || undefined, limit: 5 },
-    { enabled: isAdmin && showGrantModal && grantSearchValue.length > 0 }
+    { enabled: canAccess && showGrantModal && grantSearchValue.length > 0 }
   );
   const { data: years } = trpc.year.list.useQuery();
   const { data: activityLogs } = trpc.activity.list.useQuery(
     { limit: 50 },
-    { enabled: isAdmin && activeTab === "activity" }
+    { enabled: canAccess && activeTab === "activity" }
+  );
+
+  const { data: sectors } = trpc.sector.byYear.useQuery(
+    { yearId: Number(selectedYear) },
+    { enabled: !!selectedYear }
+  );
+  const { data: modulesList } = trpc.module.list.useQuery(
+    { yearId: Number(selectedYear), sectorId: selectedSector ? Number(selectedSector) : undefined },
+    { enabled: !!selectedYear && activeTab === "courses" }
+  );
+  const { data: moduleElements } = trpc.element.list.useQuery(
+    { moduleId: expandedModule || 0 },
+    { enabled: !!expandedModule && activeTab === "courses" }
   );
 
   const grantCandidate = useMemo(() => {
@@ -99,10 +139,30 @@ export default function AdminDashboard() {
     onSuccess: () => { utils.user.list.invalidate(); utils.user.stats.invalidate(); setDeleteConfirm(null); },
   });
   const createModuleMutation = trpc.module.create.useMutation({
-    onSuccess: () => { setShowModuleModal(false); utils.invalidate(); },
+    onSuccess: () => {
+      setShowModuleModal(false);
+      utils.module.list.invalidate();
+    },
   });
   const createElementMutation = trpc.element.create.useMutation({
-    onSuccess: () => { setShowElementModal(false); utils.invalidate(); },
+    onSuccess: () => {
+      setShowElementModal(false);
+      utils.element.list.invalidate();
+    },
+  });
+
+  const deleteModuleMutation = trpc.module.delete.useMutation({
+    onSuccess: () => {
+      setDeleteModal(null);
+      utils.module.list.invalidate();
+    },
+  });
+
+  const deleteElementMutation = trpc.element.delete.useMutation({
+    onSuccess: () => {
+      setDeleteModal(null);
+      utils.element.list.invalidate();
+    },
   });
 
   useEffect(() => {
@@ -111,6 +171,8 @@ export default function AdminDashboard() {
       setGrantError("");
     }
   }, [showGrantModal]);
+
+  const [grantRole, setGrantRole] = useState<"representative" | "promo_representative">("representative");
 
   const handleGrant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +189,13 @@ export default function AdminDashboard() {
       userId: grantCandidate.id,
       yearId: grantCandidate.yearId,
       sectorId: grantCandidate.sectorId || undefined,
+      role: grantRole,
     });
+  };
+
+  const toggleModule = (modId: number) => {
+    setExpandedModule(expandedModule === modId ? null : modId);
+    setSelectedElement(null);
   };
 
   if (authLoading) {
@@ -138,12 +206,13 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!isAdmin) return null;
+  if (!canAccess) return null;
 
-  const navItems: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
+  const navItems: { id: AdminTab; label: string; icon: any }[] = [
     { id: "dashboard", label: t("common.dashboard"), icon: LayoutDashboard },
     { id: "students", label: t("admin.students"), icon: Users },
     { id: "representatives", label: t("admin.representatives"), icon: Shield },
+    ...(isAdmin ? [{ id: "promo_reps" as const, label: t("Promo Reps"), icon: Shield }] : []),
     { id: "courses", label: t("admin.courses"), icon: BookOpen },
     { id: "activity", label: t("admin.activity"), icon: Activity },
   ];
@@ -203,7 +272,9 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#1a1a2e]">{user?.name}</p>
-                <p className="text-xs text-[#6b6b7b]">{t("admin.administrator")}</p>
+                <p className="text-xs text-[#6b6b7b]">
+                  {isAdmin ? t("admin.administrator") : t("admin.promoRepresentative")}
+                </p>
               </div>
             </div>
           </div>
@@ -342,28 +413,18 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
-                                setGrantError("");
-                                if (!u.yearId) {
-                                  setGrantError(t("admin.missingYear"));
-                                  setGrantEnsamCode(u.ensamCode || "");
-                                  setShowGrantModal(true);
-                                  return;
-                                }
-                                grantMutation.mutate({
-                                  userId: u.id,
-                                  yearId: u.yearId,
-                                  sectorId: u.sectorId || undefined,
-                                });
+                                setGrantEnsamCode(u.ensamCode || "");
+                                setShowGrantModal(true);
                               }}
                               className="p-1.5 rounded-lg hover:bg-[#fdf2f4] text-[#b24760]"
-                              title="Grant représentant access"
+                              title={t("admin.grantRepAccess")}
                             >
                               <Shield className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(u.id)}
                               className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                              title="Delete"
+                              title={t("common.delete")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -396,7 +457,10 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <button
-                  onClick={() => setShowGrantModal(true)}
+                  onClick={() => {
+                    setGrantRole("representative");
+                    setShowGrantModal(true);
+                  }}
                   className="btn-primary flex items-center gap-2 text-sm"
                 >
                   <UserPlus className="w-4 h-4" />
@@ -436,12 +500,22 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button
-                            onClick={() => revokeMutation.mutate({ userId: u.id })}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            {t("admin.revoke")}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => revokeMutation.mutate({ userId: u.id })}
+                              className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
+                              title={t("admin.revoke")}
+                            >
+                              <Shield className="w-4 h-4 rotate-180" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(u.id)}
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                              title={t("common.delete")}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -455,30 +529,305 @@ export default function AdminDashboard() {
             </>
           )}
 
+          {/* Promo Reps Tab */}
+          {activeTab === "promo_reps" && (
+            <>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+                <div className="relative flex-1 w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t("admin.searchReps")}
+                    className="w-full pl-10 pr-4 py-2.5 glass-input text-sm"
+                  />
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setGrantRole("promo_representative");
+                      setShowGrantModal(true);
+                    }}
+                    className="btn-primary flex items-center gap-2 text-sm"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {t("admin.grantAccess")}
+                  </button>
+                )}
+              </div>
+
+              <div className="glass-strong overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-[720px] w-full">
+                    <thead>
+                      <tr className="border-b border-[#f5d0d8]">
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {promoRepsData?.users.map((u) => (
+                      <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
+                        <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
+                        <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium">
+                            {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            u.isApproved
+                              ? "bg-green-100 text-green-700"
+                              : "bg-orange-100 text-orange-700"
+                          }`}>
+                            {u.isApproved ? t("common.active") : t("common.pending")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => revokeMutation.mutate({ userId: u.id })}
+                              className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
+                              title={t("admin.revoke")}
+                            >
+                              <Shield className="w-4 h-4 rotate-180" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(u.id)}
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                              title={t("common.delete")}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  </table>
+                </div>
+                {promoRepsData?.users.length === 0 && (
+                  <div className="p-8 text-center text-[#6b6b7b]">{t("admin.noRepsFound")}</div>
+                )}
+              </div>
+            </>
+          )}
+
           {/* Courses Tab */}
           {activeTab === "courses" && (
             <>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-                <button
-                  onClick={() => setShowModuleModal(true)}
-                  className="btn-primary flex items-center gap-2 text-sm"
-                >
-                  <FolderPlus className="w-4 h-4" />
-                  {t("dashboard.addModule")}
-                </button>
-                <button
-                  onClick={() => setShowElementModal(true)}
-                  className="btn-glass flex items-center gap-2 text-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  {t("dashboard.addElement")}
-                </button>
+              {/* Selectors */}
+              <div className="glass-strong p-6 mb-8">
+                <div className="flex flex-wrap gap-4 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                      {t("dashboard.academicYear")}
+                    </label>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => {
+                        setSelectedYear(e.target.value ? Number(e.target.value) : "");
+                        setSelectedSector("");
+                        setExpandedModule(null);
+                        setSelectedElement(null);
+                      }}
+                      className="px-4 py-2.5 glass-input text-sm min-w-[160px]"
+                    >
+                      <option value="">{t("common.selectYear")}</option>
+                      {years?.map((y) => (
+                        <option key={y.id} value={y.id}>{y.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedYear && years?.find(y => y.id === selectedYear)?.hasSectors && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                        {t("common.sector")}
+                      </label>
+                      <select
+                        value={selectedSector}
+                        onChange={(e) => {
+                          setSelectedSector(e.target.value ? Number(e.target.value) : "");
+                          setExpandedModule(null);
+                          setSelectedElement(null);
+                        }}
+                        className="px-4 py-2.5 glass-input text-sm min-w-[200px]"
+                      >
+                        <option value="">{t("common.selectSector")}</option>
+                        {sectors?.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="glass-strong p-8 text-center text-[#6b6b7b]">
-                <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                <p>Use the buttons above to manage modules and elements.</p>
-                <p className="text-sm mt-1">Students browse these through the dashboard.</p>
-              </div>
+
+              {canManageCourses && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+                  <button
+                    onClick={() => {
+                      setModuleYear(selectedYear);
+                      setModuleSector(selectedSector);
+                      setShowModuleModal(true);
+                    }}
+                    className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+                    disabled={!selectedYear}
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                    {t("dashboard.addModule")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setElementModule(expandedModule ?? "");
+                      setShowElementModal(true);
+                    }}
+                    className="btn-glass flex items-center gap-2 text-sm disabled:opacity-50"
+                    disabled={!modulesList || modulesList.length === 0}
+                  >
+                    <FileText className="w-4 h-4" />
+                    {t("dashboard.addElement")}
+                  </button>
+                </div>
+              )}
+
+              {/* Modules List */}
+              {selectedYear ? (
+                modulesList && modulesList.length > 0 ? (
+                  <div className="space-y-4 mb-10">
+                    {modulesList.map((mod) => (
+                      <div key={mod.id} className="glass-strong overflow-hidden">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleModule(mod.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleModule(mod.id);
+                            }
+                          }}
+                          className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                              <Folder className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-[#1a1a2e]">
+                                {mod.name}
+                              </h3>
+                              <p className="text-sm text-[#6b6b7b]">
+                                {mod.description || t("dashboard.openFolder")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                              {moduleElements && expandedModule === mod.id
+                                ? t("dashboard.elementsCount", { count: moduleElements.length })
+                                : t("dashboard.openFolder")}
+                            </span>
+                            <ChevronDown
+                              className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
+                                expandedModule === mod.id ? "rotate-180" : ""
+                              }`}
+                            />
+                            {canManageCourses && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteModal({
+                                    type: "module",
+                                    id: mod.id,
+                                    title: mod.name,
+                                  });
+                                }}
+                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {expandedModule === mod.id && moduleElements && (
+                          <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
+                            {moduleElements.length > 0 ? (
+                              <div className="grid sm:grid-cols-2 gap-3">
+                                {moduleElements.map((el) => (
+                                  <div
+                                    key={el.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => navigate(`/element/${el.id}`)}
+                                    className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                                        <Folder className="w-4 h-4 text-[#b24760]" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h4 className="font-medium text-[#1a1a2e] mb-1">
+                                          {el.name}
+                                        </h4>
+                                        <p className="text-xs text-[#6b6b7b]">
+                                          {el.description || t("dashboard.openFolder")}
+                                        </p>
+                                      </div>
+                                      {canManageCourses && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteModal({
+                                              type: "element",
+                                              id: el.id,
+                                              title: el.name,
+                                            });
+                                          }}
+                                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                {t("dashboard.noModules")}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="glass-strong p-12 text-center mb-10">
+                    <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                    <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
+                    <p className="text-sm text-[#6b6b7b]/60">
+                      {t("dashboard.noModulesDesc")}
+                    </p>
+                  </div>
+                )
+              ) : (
+                <div className="glass-strong p-12 text-center mb-10">
+                  <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                  <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
+                  <p className="text-sm text-[#6b6b7b]/60">
+                    {t("dashboard.selectYearDesc")}
+                  </p>
+                </div>
+              )}
             </>
           )}
 
@@ -547,17 +896,30 @@ export default function AdminDashboard() {
                     {t("admin.noStudentFound")}
                   </p>
                 )}
-                {grantCandidate && (
-                  <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
-                    <p className="font-medium">
-                      {t("admin.found")}: {grantCandidate.name} ({grantCandidate.ensamCode})
-                    </p>
-                    <p className="mt-1">
-                      {t("common.year")}: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
-                      {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
-                    </p>
-                  </div>
-                )}
+              {grantCandidate && (
+                <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
+                  <p className="font-medium">
+                    {t("admin.found")}: {grantCandidate.name} ({grantCandidate.ensamCode})
+                  </p>
+                  <p className="mt-1">
+                    {t("common.year")}: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
+                    {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
+                  </p>
+                </div>
+              )}
+              {grantCandidate && isAdmin && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("admin.selectRole")}</label>
+                  <select
+                    value={grantRole}
+                    onChange={(e) => setGrantRole(e.target.value as any)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                  >
+                    <option value="representative">{t("admin.representative")}</option>
+                    <option value="promo_representative">{t("admin.promoRepresentative")}</option>
+                  </select>
+                </div>
+              )}
               </div>
               {grantError && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
@@ -594,6 +956,7 @@ export default function AdminDashboard() {
                     name: moduleName,
                     yearId: Number(moduleYear),
                     sectorId: moduleSector ? Number(moduleSector) : undefined,
+                    sectorIds: moduleSectorsList.length > 0 ? moduleSectorsList : undefined,
                   });
                 }
               }}
@@ -616,9 +979,11 @@ export default function AdminDashboard() {
                   onChange={(e) => {
                     setModuleYear(e.target.value ? Number(e.target.value) : "");
                     setModuleSector("");
+                    setModuleSectorsList([]);
                   }}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
+                  disabled={isPromoRepresentative}
                 >
                   <option value="">{t("common.selectYear")}</option>
                   {years?.map((y) => (
@@ -626,16 +991,33 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
-              {years?.find((y) => y.id === moduleYear)?.hasSectors && (
+              {years?.find((y) => y.id === moduleYear)?.hasSectors && sectors && (
                 <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.sector")} ({t("common.optional")})</label>
-                  <select
-                    value={moduleSector}
-                    onChange={(e) => setModuleSector(e.target.value ? Number(e.target.value) : "")}
-                    className="w-full px-4 py-2.5 glass-input text-sm"
-                  >
-                    <option value="">{t("admin.allSectors")}</option>
-                  </select>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                    {t("common.sectors")} ({t("common.optional")})
+                  </label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto p-3 glass-input rounded-xl">
+                    {sectors.map((s) => (
+                      <label key={s.id} className="flex items-center gap-3 cursor-pointer hover:bg-[#fdf2f4]/50 p-1.5 rounded-lg transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={moduleSectorsList.includes(s.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setModuleSectorsList([...moduleSectorsList, s.id]);
+                            } else {
+                              setModuleSectorsList(moduleSectorsList.filter(id => id !== s.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-[#f5d0d8] text-[#b24760] focus:ring-[#b24760]"
+                        />
+                        <span className="text-sm text-[#6b6b7b]">{s.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[#6b6b7b] mt-2 italic">
+                    {t("admin.multiSectorNotice")}
+                  </p>
                 </div>
               )}
               <div className="flex gap-3 pt-2">
@@ -691,6 +1073,9 @@ export default function AdminDashboard() {
                   required
                 >
                   <option value="">{t("dashboard.selectModule")}</option>
+                  {modulesList?.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
@@ -730,6 +1115,48 @@ export default function AdminDashboard() {
                 className="flex-1 px-6 py-3 rounded-full font-medium text-white bg-red-500 hover:bg-red-600 transition-all"
               >
                 {t("common.delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Content Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-sm animate-fadeInUp">
+            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-2">{t("admin.confirmDelete")}</h3>
+            <p className="text-sm text-[#6b6b7b] mb-6">
+              {deleteModal.type === "module"
+                ? t("delete.moduleConfirm")
+                : deleteModal.type === "element"
+                ? t("delete.elementConfirm")
+                : t("delete.documentConfirm")}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal(null)}
+                className="flex-1 btn-glass"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteModal.type === "module") {
+                    deleteModuleMutation.mutate({ id: deleteModal.id });
+                  } else if (deleteModal.type === "element") {
+                    deleteElementMutation.mutate({ id: deleteModal.id });
+                  }
+                }}
+                disabled={
+                  deleteModuleMutation.isLoading ||
+                  deleteElementMutation.isLoading
+                }
+                className="flex-1 px-6 py-3 rounded-full font-medium text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+              >
+                {deleteModuleMutation.isLoading ||
+                deleteElementMutation.isLoading
+                  ? t("common.loading")
+                  : t("common.delete")}
               </button>
             </div>
           </div>

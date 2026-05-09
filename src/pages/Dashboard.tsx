@@ -46,6 +46,7 @@ export default function Dashboard() {
     isAuthenticated,
     isLoading: authLoading,
     isRepresentative,
+    isPromoRepresentative,
     isAdmin,
     logout,
   } = useAuth();
@@ -80,6 +81,14 @@ export default function Dashboard() {
       navigate("/login");
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  const canManageDocs =
+    isAdmin ||
+    (isPromoRepresentative && user?.yearId === Number(selectedYear)) ||
+    (isRepresentative &&
+      user?.yearId === Number(selectedYear) &&
+      (user?.sectorId === Number(selectedSector) ||
+        (!selectedSector && !user?.sectorId)));
 
   // Set defaults from user
   useEffect(() => {
@@ -205,7 +214,6 @@ export default function Dashboard() {
     ? sectors?.find((s) => s.id === selectedSector)
     : undefined;
 
-  const canManageDocs = isAdmin || isRepresentative;
   const baseFolderTypes: DocType[] = ["cours", "test", "exam", "tp"];
   const folderTypes: DocType[] = elementDocs?.some((d) => d.type === "resume")
     ? [...baseFolderTypes, "resume"]
@@ -675,17 +683,19 @@ export default function Dashboard() {
                                   }}
                                   className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
                                 >
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
-                                      <Folder className="w-4 h-4 text-[#b24760]" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-[#1a1a2e] mb-1">
-                                        {el.name}
-                                      </h4>
-                                      <p className="text-xs text-[#6b6b7b]">
-                                        {el.description || t("dashboard.openFolder")}
-                                      </p>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                                        <Folder className="w-4 h-4 text-[#b24760]" />
+                                      </div>
+                                      <div>
+                                        <h4 className="font-medium text-[#1a1a2e] mb-0.5">
+                                          {el.name}
+                                        </h4>
+                                        <p className="text-xs text-[#6b6b7b]">
+                                          {el.description || t("dashboard.openFolder")}
+                                        </p>
+                                      </div>
                                     </div>
                                     {canManageDocs && (
                                       <button
@@ -697,7 +707,7 @@ export default function Dashboard() {
                                             title: el.name,
                                           });
                                         }}
-                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                       >
                                         <Trash2 className="w-4 h-4" />
                                       </button>

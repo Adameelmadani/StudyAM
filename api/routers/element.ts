@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { createRouter, publicQuery, representativeQuery, adminQuery } from "../middleware";
+import { createRouter, publicQuery, representativeQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { elements, modules, documents } from "@db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { elements, modules, documents, moduleSectors } from "@db/schema";
+import { eq, and, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const elementRouter = createRouter({
@@ -29,15 +29,33 @@ export const elementRouter = createRouter({
 
       let moduleQuery;
       if (input.sectorId) {
-        moduleQuery = await db
-          .select()
-          .from(modules)
-          .where(
-            and(
-              eq(modules.yearId, input.yearId),
-              eq(modules.sectorId, input.sectorId)
-            )
-          );
+        const ms = await db.select().from(moduleSectors).where(eq(moduleSectors.sectorId, input.sectorId));
+        const moduleIdsFromJunction = ms.map(m => m.moduleId);
+
+        if (moduleIdsFromJunction.length > 0) {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                or(
+                  eq(modules.sectorId, input.sectorId),
+                  inArray(modules.id, moduleIdsFromJunction)
+                )
+              )
+            );
+        } else {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                eq(modules.sectorId, input.sectorId)
+              )
+            );
+        }
       } else {
         moduleQuery = await db
           .select()
@@ -91,7 +109,11 @@ export const elementRouter = createRouter({
       if (!mod) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
       }
-      if (ctx.user.role === "representative") {
+
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+
+      if (isRepresentative || isPromoRepresentative) {
         if (!ctx.user.yearId) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -104,17 +126,20 @@ export const elementRouter = createRouter({
             message: "You can only create elements for your assigned year",
           });
         }
-        if (ctx.user.sectorId && mod.sectorId !== ctx.user.sectorId) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only create elements for your assigned sector",
-          });
-        }
-        if (!ctx.user.sectorId && mod.sectorId) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only create elements for modules without a sector",
-          });
+        
+        if (isRepresentative) {
+          if (ctx.user.sectorId && mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You can only create elements for your assigned sector",
+            });
+          }
+          if (!ctx.user.sectorId && mod.sectorId) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You can only create elements for modules without a sector",
+            });
+          }
         }
       }
       const result = await db.insert(elements).values({
@@ -126,7 +151,7 @@ export const elementRouter = createRouter({
       return db.query.elements.findFirst({ where: eq(elements.id, elId) });
     }),
 
-  update: adminQuery
+  update: representativeQuery
     .input(
       z.object({
         id: z.number().int().positive(),
@@ -134,8 +159,40 @@ export const elementRouter = createRouter({
         description: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
+
+      const el = await db.query.elements.findFirst({
+        where: eq(elements.id, input.id),
+      });
+      if (!el) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Element not found" });
+      }
+
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+
+      if (isRepresentative || isPromoRepresentative) {
+        const mod = await db.query.modules.findFirst({
+          where: eq(modules.id, el.moduleId),
+        });
+        if (!mod) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+        }
+        if (mod.yearId !== ctx.user.yearId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only update elements for your assigned year",
+          });
+        }
+        if (isRepresentative && mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only update elements for your assigned sector",
+          });
+        }
+      }
+
       const { id, ...data } = input;
       await db
         .update(elements)
@@ -155,7 +212,10 @@ export const elementRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Element not found" });
       }
 
-      if (ctx.user.role === "representative") {
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+
+      if (isRepresentative || isPromoRepresentative) {
         const mod = await db.query.modules.findFirst({
           where: eq(modules.id, el.moduleId),
         });
@@ -168,7 +228,7 @@ export const elementRouter = createRouter({
             message: "You can only delete elements for your assigned year",
           });
         }
-        if (mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+        if (isRepresentative && mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You can only delete elements for your assigned sector",

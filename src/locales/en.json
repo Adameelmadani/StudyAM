@@ -43,7 +43,8 @@
     "create": "Create",
     "search": "Search",
     "optional": "Optional",
-    "module": "Module"
+    "module": "Module",
+    "sectors": "Sectors"
   },
   "types": {
     "cours": "Courses",
@@ -145,7 +146,12 @@
     "found": "Found",
     "missingYear": "Selected student is missing a year assignment.",
     "noActivity": "No activity recorded yet",
-    "administrator": "Administrator"
+    "administrator": "Administrator",
+    "role": "Role",
+    "promoRepresentative": "Promo Representative",
+    "selectRole": "Select Role",
+    "representative": "Representative",
+    "multiSectorNotice": "Select multiple sectors if this module is common to multiple specializations."
   },
   "notFound": {
     "title": "Page Not Found",

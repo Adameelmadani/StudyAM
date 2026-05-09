@@ -5,8 +5,8 @@ import {
   representativeQuery,
 } from "../middleware";
 import { getDb } from "../queries/connection";
-import { documents, elements, modules, users } from "@db/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { documents, elements, modules, users, moduleSectors } from "@db/schema";
+import { eq, and, desc, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import type { Module, Element, Document } from "@db/schema";
 
@@ -47,15 +47,33 @@ export const documentRouter = createRouter({
 
       let moduleQuery: Module[];
       if (input.sectorId) {
-        moduleQuery = await db
-          .select()
-          .from(modules)
-          .where(
-            and(
-              eq(modules.yearId, input.yearId),
-              eq(modules.sectorId, input.sectorId)
-            )
-          );
+        const ms = await db.select().from(moduleSectors).where(eq(moduleSectors.sectorId, input.sectorId));
+        const moduleIdsFromJunction = ms.map(m => m.moduleId);
+
+        if (moduleIdsFromJunction.length > 0) {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                or(
+                  eq(modules.sectorId, input.sectorId),
+                  inArray(modules.id, moduleIdsFromJunction)
+                )
+              )
+            );
+        } else {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                eq(modules.sectorId, input.sectorId)
+              )
+            );
+        }
       } else {
         moduleQuery = await db
           .select()
@@ -125,7 +143,10 @@ export const documentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Element not found" });
       }
 
-      if (ctx.user.role === "representative") {
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+
+      if (isRepresentative || isPromoRepresentative) {
         const mod = await db.query.modules.findFirst({
           where: eq(modules.id, element.moduleId),
         });
@@ -138,11 +159,13 @@ export const documentRouter = createRouter({
             message: "You can only upload for your assigned year",
           });
         }
-        if (mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only upload for your assigned sector",
-          });
+        if (isRepresentative) {
+          if (mod.sectorId && mod.sectorId !== ctx.user.sectorId) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You can only upload for your assigned sector",
+            });
+          }
         }
       }
 
@@ -176,10 +199,32 @@ export const documentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
       }
 
-      if (ctx.user.role !== "admin" && doc.uploadedBy !== ctx.user.id) {
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+      const isAdmin = ctx.user.role === "admin";
+
+      if (isRepresentative || isPromoRepresentative) {
+        const el = await db.query.elements.findFirst({
+          where: eq(elements.id, doc.elementId),
+        });
+        const mod = el ? await db.query.modules.findFirst({
+          where: eq(modules.id, el.moduleId),
+        }) : null;
+
+        const isOwner = doc.uploadedBy === ctx.user.id;
+        const isRepForSector = mod && mod.yearId === ctx.user.yearId && (mod.sectorId === ctx.user.sectorId || (!mod.sectorId && !ctx.user.sectorId));
+        const isPromoRepForYear = isPromoRepresentative && mod && mod.yearId === ctx.user.yearId;
+
+        if (!isOwner && !isRepForSector && !isPromoRepForYear) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only update your own documents or documents in your assigned sphere",
+          });
+        }
+      } else if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "You can only update your own documents",
+          message: "You do not have permission to update this document",
         });
       }
 
@@ -199,10 +244,32 @@ export const documentRouter = createRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
       }
 
-      if (ctx.user.role !== "admin" && doc.uploadedBy !== ctx.user.id) {
+      const isRepresentative = ctx.user.role === "representative";
+      const isPromoRepresentative = ctx.user.role === "promo_representative";
+      const isAdmin = ctx.user.role === "admin";
+
+      if (isRepresentative || isPromoRepresentative) {
+        const el = await db.query.elements.findFirst({
+          where: eq(elements.id, doc.elementId),
+        });
+        const mod = el ? await db.query.modules.findFirst({
+          where: eq(modules.id, el.moduleId),
+        }) : null;
+
+        const isOwner = doc.uploadedBy === ctx.user.id;
+        const isRepForSector = mod && mod.yearId === ctx.user.yearId && (mod.sectorId === ctx.user.sectorId || (!mod.sectorId && !ctx.user.sectorId));
+        const isPromoRepForYear = isPromoRepresentative && mod && mod.yearId === ctx.user.yearId;
+
+        if (!isOwner && !isRepForSector && !isPromoRepForYear) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete your own documents or documents in your assigned sphere",
+          });
+        }
+      } else if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "You can only delete your own documents",
+          message: "You do not have permission to delete this document",
         });
       }
 
@@ -232,15 +299,33 @@ export const documentRouter = createRouter({
 
       let moduleQuery: Module[];
       if (input.sectorId) {
-        moduleQuery = await db
-          .select()
-          .from(modules)
-          .where(
-            and(
-              eq(modules.yearId, input.yearId),
-              eq(modules.sectorId, input.sectorId)
-            )
-          );
+        const ms = await db.select().from(moduleSectors).where(eq(moduleSectors.sectorId, input.sectorId));
+        const moduleIdsFromJunction = ms.map(m => m.moduleId);
+
+        if (moduleIdsFromJunction.length > 0) {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                or(
+                  eq(modules.sectorId, input.sectorId),
+                  inArray(modules.id, moduleIdsFromJunction)
+                )
+              )
+            );
+        } else {
+          moduleQuery = await db
+            .select()
+            .from(modules)
+            .where(
+              and(
+                eq(modules.yearId, input.yearId),
+                eq(modules.sectorId, input.sectorId)
+              )
+            );
+        }
       } else {
         moduleQuery = await db
           .select()

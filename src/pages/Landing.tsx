@@ -12,13 +12,15 @@ export default function Landing() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+      const dest = (user.role === "admin" || user.role === "promo_representative") ? "/admin" : "/dashboard";
+      navigate(dest);
     }
   }, [isLoading, isAuthenticated, user, navigate]);
 
   const handleAuthAction = () => {
     if (isAuthenticated && user) {
-      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+      const dest = (user.role === "admin" || user.role === "promo_representative") ? "/admin" : "/dashboard";
+      navigate(dest);
     } else {
       navigate("/login");
     }

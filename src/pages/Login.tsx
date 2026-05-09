@@ -50,11 +50,8 @@ export default function Login() {
 
   // Redirect if authenticated
   if (isAuthenticated && user) {
-    if (user.role === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/dashboard");
-    }
+    const dest = (user.role === "admin" || user.role === "promo_representative") ? "/admin" : "/dashboard";
+    navigate(dest);
     return null;
   }
 
@@ -69,7 +66,7 @@ export default function Login() {
         password,
       });
       localStorage.setItem("local_auth_token", result.token);
-      const destination = result.user.role === "admin" ? "/admin" : "/dashboard";
+      const destination = (result.user.role === "admin" || result.user.role === "promo_representative") ? "/admin" : "/dashboard";
       window.location.href = destination;
     } catch (err: unknown) {
       const error = err as { message?: string };
