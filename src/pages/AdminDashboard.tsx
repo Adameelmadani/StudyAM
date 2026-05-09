@@ -22,6 +22,9 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
+  ArrowLeft,
+  Link2,
+  FolderOpen,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -90,6 +93,12 @@ export default function AdminDashboard() {
     { role: "promo_representative", search: searchQuery || undefined, limit: 50 },
     { enabled: canAccess && activeTab === "promo_reps" }
   );
+  // Get documents for selected element
+  const { data: elementDocs } = trpc.document.list.useQuery(
+    { elementId: selectedElement || 0 },
+    { enabled: !!selectedElement }
+  );
+
   const grantSearchValue = grantEnsamCode.trim();
   const { data: grantSearchResults, isFetching: grantSearching } = trpc.user.list.useQuery(
     { role: "student", search: grantSearchValue || undefined, limit: 5 },
@@ -691,182 +700,261 @@ export default function AdminDashboard() {
                     className="btn-glass flex items-center gap-2 text-sm disabled:opacity-50"
                     disabled={!modulesList || modulesList.length === 0}
                   >
-                    <FileText className="w-4 h-4" />
-                    {t("dashboard.addElement")}
-                  </button>
-                </div>
-              )}
-
-              {/* Modules List */}
-              {selectedYear ? (
-                modulesList && modulesList.length > 0 ? (
-                  <div className="space-y-4 mb-10">
-                    {modulesList.map((mod) => (
-                      <div key={mod.id} className="glass-strong overflow-hidden">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => toggleModule(mod.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              toggleModule(mod.id);
-                            }
-                          }}
-                          className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
-                              <Folder className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-[#1a1a2e]">
-                                {mod.name}
-                              </h3>
-                              <p className="text-sm text-[#6b6b7b]">
-                                {mod.description || t("dashboard.openFolder")}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
-                              {moduleElements && expandedModule === mod.id
-                                ? t("dashboard.elementsCount", { count: moduleElements.length })
-                                : t("dashboard.openFolder")}
-                            </span>
-                            <ChevronDown
-                              className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
-                                expandedModule === mod.id ? "rotate-180" : ""
-                              }`}
-                            />
-                            {canManageCourses && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteModal({
-                                    type: "module",
-                                    id: mod.id,
-                                    title: mod.name,
-                                  });
-                                }}
-                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
+                            <FileText className="w-4 h-4" />
+                            {t("dashboard.addElement")}
+                          </button>
                         </div>
+                      )}
+                      {/* Courses Content */}
+                      {selectedElement ? (
+                        <div className="animate-fadeInUp">
+                          <div className="flex items-center justify-between mb-6">
+                            <button
+                              onClick={() => setSelectedElement(null)}
+                              className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
+                            >
+                              <ArrowLeft className="w-4 h-4" /> {t("common.back")}
+                            </button>
+                            <h3 className="text-lg font-semibold text-[#1a1a2e]">
+                              {moduleElements?.find(e => e.id === selectedElement)?.name}
+                            </h3>
+                          </div>
 
-                        {expandedModule === mod.id && moduleElements && (
-                          <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
-                            {moduleElements.length > 0 ? (
-                              <div className="grid sm:grid-cols-2 gap-3">
-                                {moduleElements.map((el) => (
-                                  <div
-                                    key={el.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => navigate(`/element/${el.id}`)}
-                                    className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left"
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
-                                        <Folder className="w-4 h-4 text-[#b24760]" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <h4 className="font-medium text-[#1a1a2e] mb-1">
-                                          {el.name}
-                                        </h4>
-                                        <p className="text-xs text-[#6b6b7b]">
-                                          {el.description || t("dashboard.openFolder")}
-                                        </p>
-                                      </div>
-                                      {canManageCourses && (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteModal({
-                                              type: "element",
-                                              id: el.id,
-                                              title: el.name,
-                                            });
-                                          }}
-                                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      )}
+                          {elementDocs && elementDocs.length > 0 ? (
+                            <div className="grid gap-3">
+                              {elementDocs.map((doc) => (
+                                <div
+                                  key={doc.id}
+                                  className="glass-strong p-4 flex items-center justify-between gap-4"
+                                >
+                                  <div className="flex items-center gap-4 min-w-0">
+                                    <div className="w-10 h-10 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0">
+                                      <FileText className="w-5 h-5 text-[#b24760]" />
                                     </div>
+                                    <div className="min-w-0">
+                                      <h4 className="font-medium text-[#1a1a2e] truncate">
+                                        {doc.title}
+                                      </h4>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="px-2 py-0.5 rounded-full bg-[#fdf2f4] text-[#b24760] text-[10px] font-medium uppercase">
+                                          {t(`types.${doc.type}`)}
+                                        </span>
+                                        <span className="text-[10px] text-[#6b6b7b]">
+                                          {t("dashboard.by")} {doc.uploaderName}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={doc.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="btn-glass text-xs py-2 px-4"
+                                    >
+                                      {t("common.open")}
+                                    </a>
+                                    {canManageCourses && (
+                                      <button
+                                        onClick={() =>
+                                          setDeleteModal({
+                                            type: "document",
+                                            id: doc.id,
+                                            title: doc.title,
+                                          })
+                                        }
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="glass-strong p-12 text-center">
+                              <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                              <p className="text-[#6b6b7b]">{t("dashboard.noDocsYet", { type: "" })}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Modules List */}
+                          {selectedYear ? (
+                            modulesList && modulesList.length > 0 ? (
+                              <div className="space-y-4 mb-10">
+                                {modulesList.map((mod) => (
+                                  <div key={mod.id} className="glass-strong overflow-hidden">
+                                    <div
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() => toggleModule(mod.id)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                          e.preventDefault();
+                                          toggleModule(mod.id);
+                                        }
+                                      }}
+                                      className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                                          <Folder className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                          <h3 className="font-semibold text-[#1a1a2e]">
+                                            {mod.name}
+                                          </h3>
+                                          <p className="text-sm text-[#6b6b7b]">
+                                            {mod.description || t("dashboard.openFolder")}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                                          {moduleElements && expandedModule === mod.id
+                                            ? t("dashboard.elementsCount", { count: moduleElements.length })
+                                            : t("dashboard.openFolder")}
+                                        </span>
+                                        <ChevronDown
+                                          className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
+                                            expandedModule === mod.id ? "rotate-180" : ""
+                                          }`}
+                                        />
+                                        {canManageCourses && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDeleteModal({
+                                                type: "module",
+                                                id: mod.id,
+                                                title: mod.name,
+                                              });
+                                            }}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {expandedModule === mod.id && moduleElements && (
+                                      <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
+                                        {moduleElements.length > 0 ? (
+                                          <div className="grid sm:grid-cols-2 gap-3">
+                                            {moduleElements.map((el) => (
+                                              <div
+                                                key={el.id}
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => setSelectedElement(el.id)}
+                                                className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
+                                              >
+                                                <div className="flex items-center justify-between gap-3">
+                                                  <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                                                      <Folder className="w-4 h-4 text-[#b24760]" />
+                                                    </div>
+                                                    <div>
+                                                      <h4 className="font-medium text-[#1a1a2e] mb-0.5">
+                                                        {el.name}
+                                                      </h4>
+                                                      <p className="text-xs text-[#6b6b7b]">
+                                                        {el.description || t("dashboard.openFolder")}
+                                                      </p>
+                                                    </div>
+                                                  </div>
+                                                  {canManageCourses && (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteModal({
+                                                          type: "element",
+                                                          id: el.id,
+                                                          title: el.name,
+                                                        });
+                                                      }}
+                                                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                      <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                            {t("dashboard.noModules")}
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-sm text-[#6b6b7b] text-center py-4">
-                                {t("dashboard.noModules")}
+                              <div className="glass-strong p-12 text-center mb-10">
+                                <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                                <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
+                                <p className="text-sm text-[#6b6b7b]/60">
+                                  {t("dashboard.noModulesDesc")}
+                                </p>
+                              </div>
+                            )
+                          ) : (
+                            <div className="glass-strong p-12 text-center mb-10">
+                              <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                              <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
+                              <p className="text-sm text-[#6b6b7b]/60">
+                                {t("dashboard.selectYearDesc")}
                               </p>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+
+              {/* Activity Tab */}
+              {activeTab === "activity" && (
+                <div className="space-y-3">
+                  {activityLogs?.map((log) => (
+                    <div
+                      key={log.id}
+                      className="glass-strong p-4 flex items-start gap-4 border-l-4 border-l-[#b24760]"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0 mt-0.5">
+                        {log.action === "upload" && <UploadCloud className="w-4 h-4 text-green-600" />}
+                        {log.action === "edit" && <Pencil className="w-4 h-4 text-blue-600" />}
+                        {log.action === "delete" && <Trash2 className="w-4 h-4 text-red-600" />}
+                        {log.action === "grant_access" && <Shield className="w-4 h-4 text-[#b24760]" />}
+                        {log.action === "revoke_access" && <Shield className="w-4 h-4 text-orange-600" />}
+                        {!["upload", "edit", "delete", "grant_access", "revoke_access"].includes(log.action) && (
+                          <Activity className="w-4 h-4 text-[#b24760]" />
                         )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="glass-strong p-12 text-center mb-10">
-                    <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                    <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
-                    <p className="text-sm text-[#6b6b7b]/60">
-                      {t("dashboard.noModulesDesc")}
-                    </p>
-                  </div>
-                )
-              ) : (
-                <div className="glass-strong p-12 text-center mb-10">
-                  <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                  <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
-                  <p className="text-sm text-[#6b6b7b]/60">
-                    {t("dashboard.selectYearDesc")}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Activity Tab */}
-          {activeTab === "activity" && (
-            <div className="space-y-3">
-              {activityLogs?.map((log) => (
-                <div
-                  key={log.id}
-                  className="glass-strong p-4 flex items-start gap-4 border-l-4 border-l-[#b24760]"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0 mt-0.5">
-                    {log.action === "upload" && <UploadCloud className="w-4 h-4 text-green-600" />}
-                    {log.action === "edit" && <Pencil className="w-4 h-4 text-blue-600" />}
-                    {log.action === "delete" && <Trash2 className="w-4 h-4 text-red-600" />}
-                    {log.action === "grant_access" && <Shield className="w-4 h-4 text-[#b24760]" />}
-                    {log.action === "revoke_access" && <Shield className="w-4 h-4 text-orange-600" />}
-                    {!["upload", "edit", "delete", "grant_access", "revoke_access"].includes(log.action) && (
-                      <Activity className="w-4 h-4 text-[#b24760]" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-[#1a1a2e]">{log.description}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-[#6b6b7b]">{log.performerName}</span>
-                      <span className="text-xs text-[#6b6b7b]/60">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm text-[#1a1a2e]">{log.description}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-[#6b6b7b]">{log.performerName}</span>
+                          <span className="text-xs text-[#6b6b7b]/60">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-              {activityLogs?.length === 0 && (
-                <div className="glass-strong p-8 text-center text-[#6b6b7b]">
-                  {t("admin.noActivity")}
+                  ))}
+                  {activityLogs?.length === 0 && (
+                    <div className="glass-strong p-8 text-center text-[#6b6b7b]">
+                      {t("admin.noActivity")}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
         </div>
       </main>
 

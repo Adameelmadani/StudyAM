@@ -82,13 +82,11 @@ export default function Dashboard() {
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  const canManageDocs =
-    isAdmin ||
-    (isPromoRepresentative && user?.yearId === Number(selectedYear)) ||
-    (isRepresentative &&
-      user?.yearId === Number(selectedYear) &&
-      (user?.sectorId === Number(selectedSector) ||
-        (!selectedSector && !user?.sectorId)));
+  const isYearMatch = user?.yearId === Number(selectedYear);
+  const isSectorMatch = user?.sectorId === Number(selectedSector) || (!selectedSector && !user?.sectorId);
+
+  const canManageFolders = isAdmin || (isPromoRepresentative && isYearMatch);
+  const canManageDocs = canManageFolders || (isRepresentative && isYearMatch && isSectorMatch);
 
   // Set defaults from user
   useEffect(() => {
@@ -584,7 +582,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {canManageDocs && (
+              {canManageFolders && (
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                   <button
                     onClick={openModuleModal}
@@ -643,7 +641,7 @@ export default function Dashboard() {
                               expandedModule === mod.id ? "rotate-180" : ""
                             }`}
                           />
-                          {canManageDocs && (
+                          {canManageFolders && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -697,7 +695,7 @@ export default function Dashboard() {
                                         </p>
                                       </div>
                                     </div>
-                                    {canManageDocs && (
+                                    {canManageFolders && (
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
