@@ -25,11 +25,13 @@ import {
   ArrowLeft,
   Link2,
   FolderOpen,
+  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity";
+type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -58,6 +60,11 @@ export default function AdminDashboard() {
     id: number;
     title: string;
   } | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkTitle, setLinkTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkType, setLinkType] = useState<DocType>("cours");
+  const [linkError, setLinkError] = useState("");
 
   const canAccess = isAdmin || isPromoRepresentative;
   const canManageCourses = isAdmin || (isPromoRepresentative && selectedYear === user?.yearId);
@@ -159,6 +166,37 @@ export default function AdminDashboard() {
       utils.element.list.invalidate();
     },
   });
+
+  const createDocMutation = trpc.document.create.useMutation({
+    onSuccess: () => {
+      setShowLinkModal(false);
+      setLinkTitle("");
+      setLinkUrl("");
+      setLinkError("");
+      if (selectedElement) {
+        utils.document.list.invalidate({ elementId: selectedElement });
+      }
+      utils.document.recent.invalidate();
+    },
+  });
+
+  const handleLinkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedElement) return;
+    setLinkError("");
+
+    try {
+      await createDocMutation.mutateAsync({
+        title: linkTitle,
+        url: linkUrl,
+        type: linkType,
+        elementId: selectedElement,
+      });
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setLinkError(error.message || "Failed to add link");
+    }
+  };
 
   const deleteModuleMutation = trpc.module.delete.useMutation({
     onSuccess: () => {
@@ -720,6 +758,16 @@ export default function AdminDashboard() {
                             </h3>
                           </div>
 
+                          {canManageCourses && (
+                            <button
+                              onClick={() => setShowLinkModal(true)}
+                              className="btn-primary flex items-center gap-2 text-sm mb-6"
+                            >
+                              <Link2 className="w-4 h-4" />
+                              {t("dashboard.addDriveUrl")}
+                            </button>
+                          )}
+
                           {elementDocs && elementDocs.length > 0 ? (
                             <div className="grid gap-3">
                               {elementDocs.map((doc) => (
@@ -1247,6 +1295,73 @@ export default function AdminDashboard() {
                   : t("common.delete")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveUrl")}</h3>
+              <button onClick={() => setShowLinkModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+                <X className="w-5 h-5 text-[#6b6b7b]" />
+              </button>
+            </div>
+            <form onSubmit={handleLinkSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.title")}</label>
+                <input
+                  type="text"
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder={t("common.title")}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive URL</label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="https://drive.google.com/..."
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.type")}</label>
+                <select
+                  value={linkType}
+                  onChange={(e) => setLinkType(e.target.value as DocType)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                >
+                  <option value="cours">{t("types.cours")}</option>
+                  <option value="exam">{t("types.exam")}</option>
+                  <option value="test">{t("types.test")}</option>
+                  <option value="tp">{t("types.tp")}</option>
+                  <option value="resume">{t("types.resume")}</option>
+                </select>
+              </div>
+              {linkError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {linkError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowLinkModal(false)} className="flex-1 btn-glass">
+                  {t("common.cancel")}
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 btn-primary"
+                  disabled={createDocMutation.isLoading}
+                >
+                  {createDocMutation.isLoading ? t("common.loading") : t("common.save")}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
