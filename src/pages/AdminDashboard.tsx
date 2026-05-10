@@ -117,6 +117,7 @@ export default function AdminDashboard() {
     { enabled: canAccess && showGrantModal && grantSearchValue.length > 0 }
   );
   const { data: years } = trpc.year.list.useQuery();
+  const { data: allSectors } = trpc.sector.list.useQuery(undefined, { enabled: canAccess });
   const { data: activityLogs } = trpc.activity.list.useQuery(
     { limit: 50 },
     { enabled: canAccess && activeTab === "activity" }
@@ -474,6 +475,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.email")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                     </tr>
                   </thead>
@@ -487,6 +489,15 @@ export default function AdminDashboard() {
                           <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
                             {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.sectorId ? (
+                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                            </span>
+                          ) : (
+                            <span className="text-[#6b6b7b] text-sm">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
@@ -555,6 +566,7 @@ export default function AdminDashboard() {
                         <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                     </tr>
@@ -568,6 +580,15 @@ export default function AdminDashboard() {
                           <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
                             {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.sectorId ? (
+                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                            </span>
+                          ) : (
+                            <span className="text-[#6b6b7b] text-sm">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -644,6 +665,7 @@ export default function AdminDashboard() {
                         <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
                       <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                     </tr>
@@ -657,6 +679,15 @@ export default function AdminDashboard() {
                           <span className="px-2 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium">
                             {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.sectorId ? (
+                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                            </span>
+                          ) : (
+                            <span className="text-[#6b6b7b] text-sm">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
