@@ -76,6 +76,7 @@ export default function Dashboard() {
     id: number;
     title: string;
   } | null>(null);
+  const [activeTab, setActiveTab] = useState<"courses" | "settings">("courses");
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -287,26 +288,13 @@ export default function Dashboard() {
     setActiveDocType(null);
   };
 
-  const scrollToSection = (section: "dashboard" | "courses" | "settings") => {
-    if (section === "dashboard") {
+  const switchTab = (tab: "courses" | "settings") => {
+    setActiveTab(tab);
+    if (tab === "courses") {
       setSelectedElement(null);
       setExpandedModule(null);
       setActiveDocType(null);
     }
-    if (section === "courses") {
-      setSelectedElement(null);
-      setActiveDocType(null);
-    }
-    const targetId =
-      section === "dashboard"
-        ? "dashboard-section"
-        : section === "courses"
-        ? "courses-section"
-        : "settings-section";
-    document.getElementById(targetId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
   };
 
   const openLinkModal = (type: DocType) => {
@@ -368,20 +356,16 @@ export default function Dashboard() {
 
         <nav className="px-2 space-y-1">
           <button
-            onClick={() => scrollToSection("dashboard")}
-            className="nav-item active w-full"
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            {sidebarOpen && <span>{t("common.dashboard")}</span>}
-          </button>
-          <button
-            onClick={() => scrollToSection("courses")}
-            className="nav-item w-full"
+            onClick={() => switchTab("courses")}
+            className={`nav-item w-full ${activeTab === "courses" ? "active" : ""}`}
           >
             <BookOpen className="w-5 h-5" />
             {sidebarOpen && <span>{t("dashboard.myCourses")}</span>}
           </button>
-          <button onClick={() => scrollToSection("settings")} className="nav-item w-full">
+          <button 
+            onClick={() => switchTab("settings")} 
+            className={`nav-item w-full ${activeTab === "settings" ? "active" : ""}`}
+          >
             <Settings className="w-5 h-5" />
             {sidebarOpen && <span>{t("common.settings")}</span>}
           </button>
@@ -439,17 +423,24 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-[#1a1a2e]">
-                {t("dashboard.welcomeUser", { name: user.name || "Student" })}
+                {activeTab === "courses" 
+                  ? t("dashboard.welcomeUser", { name: user.name || "Student" })
+                  : t("common.settings")}
               </h1>
-              <p className="text-[#6b6b7b] mt-1">
-                {t("common.year")} {selectedYearData?.name || "..."}
-                {selectedSector && sectors
-                  ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
-                  : ""}
-              </p>
+              {activeTab === "courses" && (
+                <p className="text-[#6b6b7b] mt-1">
+                  {t("common.year")} {selectedYearData?.name || "..."}
+                  {selectedSector && sectors
+                    ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
+                    : ""}
+                </p>
+              )}
             </div>
             <LanguageSwitcher />
           </div>
+
+          {activeTab === "courses" ? (
+            <>
 
           {/* Year & Sector Selector */}
           <div className="glass-strong p-6 mb-8">
@@ -837,154 +828,153 @@ export default function Dashboard() {
               )}
             </>
           )}
-          <section id="settings-section" className="mt-12 mb-20">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("common.settings")}</h3>
-              {!isEditingSettings ? (
-                <button
-                  onClick={startEditing}
-                  className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
-                >
-                  <Pencil className="w-4 h-4" />
-                  {t("common.edit")}
-                </button>
-              ) : (
-                <div className="flex items-center gap-3">
+            </>
+          ) : (
+            <div className="animate-fadeInUp">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-[#1a1a2e]">{t("common.settings")}</h2>
+                {!isEditingSettings ? (
                   <button
-                    onClick={() => setIsEditingSettings(false)}
-                    className="text-sm text-[#6b6b7b] hover:underline"
+                    onClick={startEditing}
+                    className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
                   >
-                    {t("common.cancel")}
+                    <Pencil className="w-4 h-4" />
+                    {t("common.edit")}
                   </button>
-                  <button
-                    onClick={handleUpdateProfile}
-                    disabled={updateProfileMutation.isLoading}
-                    className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
-                  >
-                    <Check className="w-4 h-4" />
-                    {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
-                  </button>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsEditingSettings(false)}
+                      className="text-sm text-[#6b6b7b] hover:underline"
+                    >
+                      {t("common.cancel")}
+                    </button>
+                    <button
+                      onClick={handleUpdateProfile}
+                      disabled={updateProfileMutation.isLoading}
+                      className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
+                    >
+                      <Check className="w-4 h-4" />
+                      {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {settingsError && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {settingsError}
                 </div>
               )}
-            </div>
 
-            {settingsError && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                {settingsError}
-              </div>
-            )}
-
-            <div className="glass-strong p-6">
-              {!isEditingSettings ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="min-w-0">
-                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.fullName")}</p>
-                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.name || "-"}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.email")}</p>
-                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.email || "-"}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.ensamCode")}</p>
-                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.ensamCode || "-"}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-[#6b6b7b] mb-1">{t("dashboard.academicTrack")}</p>
-                    <p className="text-sm font-medium text-[#1a1a2e] break-words">
-                      {years?.find(y => y.id === user.yearId)?.name || "N/A"}
-                      {user.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-xs text-[#6b6b7b]">{t("common.fullName")}</label>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-3 py-2 glass-input text-sm"
-                      placeholder={t("common.fullName")}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-[#6b6b7b]">{t("common.email")}</label>
-                    <input
-                      type="email"
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full px-3 py-2 glass-input text-sm"
-                      placeholder={t("common.email")}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-[#6b6b7b]">{t("common.ensamCode")}</label>
-                    <input
-                      type="text"
-                      value={user.ensamCode || ""}
-                      className="w-full px-3 py-2 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70"
-                      disabled
-                    />
-                    <p className="text-[10px] text-[#6b6b7b]">{t("settings.cannotChangeCode")}</p>
-                  </div>
-                  
-                  {/* Year/Sector: only for non-reps */}
-                  {!(isRepresentative || isPromoRepresentative || isAdmin) ? (
-                    <>
-                      <div className="space-y-1">
-                        <label className="text-xs text-[#6b6b7b]">{t("dashboard.academicYear")}</label>
-                        <select
-                          value={editYear}
-                          onChange={(e) => {
-                            setEditYear(e.target.value ? Number(e.target.value) : "");
-                            setEditSector("");
-                          }}
-                          className="w-full px-3 py-2 glass-input text-sm"
-                          required
-                        >
-                          <option value="">{t("common.selectYear")}</option>
-                          {years?.map((y) => (
-                            <option key={y.id} value={y.id}>{y.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs text-[#6b6b7b]">{t("common.sector")}</label>
-                        <select
-                          value={editSector}
-                          onChange={(e) => setEditSector(e.target.value ? Number(e.target.value) : "")}
-                          className="w-full px-3 py-2 glass-input text-sm"
-                          disabled={!editYear || !years?.find(y => y.id === editYear)?.hasSectors}
-                          required={!!editYear && !!years?.find(y => y.id === editYear)?.hasSectors}
-                        >
-                          <option value="">{t("common.selectSector")}</option>
-                          {editSectors?.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="space-y-1">
-                      <label className="text-xs text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
-                      <div className="px-3 py-2 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+              <div className="glass-strong p-8">
+                {!isEditingSettings ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.fullName")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user.name || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.email")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user.email || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.ensamCode")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user.ensamCode || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("dashboard.academicTrack")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">
                         {years?.find(y => y.id === user.yearId)?.name || "N/A"}
                         {user.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
-                      </div>
-                      <p className="text-[10px] text-[#6b6b7b]">{t("settings.repCannotChangeYear")}</p>
+                      </p>
                     </div>
-                  )}
-                </form>
-              )}
+                  </div>
+                ) : (
+                  <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.fullName")}</label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full px-4 py-3 glass-input text-sm"
+                        placeholder={t("common.fullName")}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
+                      <input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        className="w-full px-4 py-3 glass-input text-sm"
+                        placeholder={t("common.email")}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#6b6b7b]">{t("common.ensamCode")}</label>
+                      <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                        {user.ensamCode}
+                      </div>
+                      <p className="text-[10px] text-[#6b6b7b] italic">{t("settings.cannotChangeCode")}</p>
+                    </div>
+                    
+                    {!(isRepresentative || isPromoRepresentative || isAdmin) ? (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#1a1a2e]">{t("dashboard.academicYear")}</label>
+                          <select
+                            value={editYear}
+                            onChange={(e) => {
+                              setEditYear(e.target.value ? Number(e.target.value) : "");
+                              setEditSector("");
+                            }}
+                            className="w-full px-4 py-3 glass-input text-sm"
+                            required
+                          >
+                            <option value="">{t("common.selectYear")}</option>
+                            {years?.map((y) => (
+                              <option key={y.id} value={y.id}>{y.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#1a1a2e]">{t("common.sector")}</label>
+                          <select
+                            value={editSector}
+                            onChange={(e) => setEditSector(e.target.value ? Number(e.target.value) : "")}
+                            className="w-full px-4 py-3 glass-input text-sm"
+                            disabled={!editYear || !years?.find(y => y.id === editYear)?.hasSectors}
+                            required={!!editYear && !!years?.find(y => y.id === editYear)?.hasSectors}
+                          >
+                            <option value="">{t("common.selectSector")}</option>
+                            {editSectors?.map((s) => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
+                        <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                          {years?.find(y => y.id === user.yearId)?.name || "N/A"}
+                          {user.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                        </div>
+                        <p className="text-[10px] text-[#6b6b7b] italic">{t("settings.repCannotChangeYear")}</p>
+                      </div>
+                    )}
+                  </form>
+                )}
+              </div>
+              <p className="text-xs text-[#6b6b7b] mt-4">
+                {t("dashboard.repAccessDisclaimer")}
+              </p>
             </div>
-            <p className="text-xs text-[#6b6b7b] mt-3">
-              {t("dashboard.repAccessDisclaimer")}
-            </p>
-          </section>
+          )}
         </div>
       </main>
 
