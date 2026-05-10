@@ -69,6 +69,7 @@ export const modules = mysqlTable("modules", {
   yearId: bigint("yearId", { mode: "number", unsigned: true }).notNull(),
   // Keep sectorId for backward compatibility or as the primary sector
   sectorId: bigint("sectorId", { mode: "number", unsigned: true }),
+  semester: int("semester").default(1).notNull(),
   icon: varchar("icon", { length: 50 }).default("book"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

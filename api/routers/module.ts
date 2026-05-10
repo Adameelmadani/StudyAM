@@ -70,6 +70,7 @@ export const moduleRouter = createRouter({
         description: z.string().optional(),
         yearId: z.number().int().positive(),
         sectorId: z.number().int().positive().optional(),
+        semester: z.number().int().min(1).max(2),
         sectorIds: z.array(z.number().int().positive()).optional(),
         icon: z.string().optional(),
       })
@@ -114,6 +115,7 @@ export const moduleRouter = createRouter({
         description: input.description || null,
         yearId: (isRepresentative || isPromoRepresentative) ? ctx.user.yearId : input.yearId,
         sectorId: isRepresentative ? (ctx.user.sectorId || null) : (input.sectorId || null),
+        semester: input.semester,
         icon: input.icon || "book",
       });
       const modId = Number(result[0].insertId);
@@ -137,6 +139,7 @@ export const moduleRouter = createRouter({
         id: z.number().int().positive(),
         name: z.string().optional(),
         description: z.string().optional(),
+        semester: z.number().int().min(1).max(2).optional(),
         icon: z.string().optional(),
         sectorIds: z.array(z.number().int().positive()).optional(),
       })
