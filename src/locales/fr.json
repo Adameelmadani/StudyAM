@@ -165,5 +165,12 @@
     "elementConfirm": "Êtes-vous sûr de vouloir supprimer cet élément et tous ses documents ? Cette action est irréversible.",
     "documentTitle": "Supprimer le document",
     "documentConfirm": "Êtes-vous sûr de vouloir supprimer ce document ?"
+  },
+  "settings": {
+    "cannotChangeCode": "Vous ne pouvez pas modifier votre code ENSAM.",
+    "repCannotChangeYear": "Les représentants ne peuvent pas modifier leur année/filière.",
+    "adminCannotChangeYear": "Les administrateurs ne peuvent pas modifier leur année/filière.",
+    "sectorRequired": "Veuillez sélectionner une filière pour cette année.",
+    "yearRequired": "Veuillez sélectionner une année académique."
   }
 }

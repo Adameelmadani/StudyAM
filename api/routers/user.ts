@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { adminQuery, createRouter, representativeQuery } from "../middleware";
+import { adminQuery, authedQuery, createRouter, representativeQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { users, documents, elements } from "@db/schema";
+import { users, documents, elements, years } from "@db/schema";
 import { eq, and, or } from "drizzle-orm";
 import type { User } from "@db/schema";
 import { TRPCError } from "@trpc/server";
@@ -102,6 +102,52 @@ export const userRouter = createRouter({
       const { id, ...data } = input;
       await db.update(users).set(data).where(eq(users.id, id));
       return db.query.users.findFirst({ where: eq(users.id, id) });
+    }),
+
+  updateProfile: authedQuery
+    .input(
+      z.object({
+        name: z.string().min(2).optional(),
+        email: z.string().email().optional(),
+        yearId: z.number().int().positive().optional(),
+        sectorId: z.number().int().positive().nullable().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      
+      const isRep = ctx.user.role === "representative";
+      const isPromoRep = ctx.user.role === "promo_representative";
+      const isAdmin = ctx.user.role === "admin";
+      
+      const updateData: any = {};
+      if (input.name) updateData.name = input.name;
+      if (input.email) updateData.email = input.email;
+
+      // Only standard students can change their year/sector
+      if (!isRep && !isPromoRep && !isAdmin) {
+        if (!input.yearId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Academic year is required",
+          });
+        }
+        
+        const year = await db.query.years.findFirst({
+          where: eq(years.id, input.yearId),
+        });
+        if (year?.hasSectors && input.sectorId === null) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Sector is required for this year",
+          });
+        }
+        updateData.yearId = input.yearId;
+        updateData.sectorId = input.sectorId;
+      }
+
+      await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
+      return { success: true };
     }),
 
   delete: representativeQuery

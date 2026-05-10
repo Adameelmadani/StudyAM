@@ -17,6 +17,8 @@ import {
   Link2,
   X,
   Trash2,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -74,6 +76,12 @@ export default function Dashboard() {
     id: number;
     title: string;
   } | null>(null);
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editYear, setEditYear] = useState<number | "">("");
+  const [editSector, setEditSector] = useState<number | "">("");
+  const [settingsError, setSettingsError] = useState("");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -146,6 +154,11 @@ export default function Dashboard() {
     { enabled: !!selectedElement }
   );
 
+  const { data: editSectors } = trpc.sector.byYear.useQuery(
+    { yearId: Number(editYear) },
+    { enabled: isEditingSettings && !!editYear && years?.find(y => y.id === editYear)?.hasSectors }
+  );
+
   const createDocMutation = trpc.document.create.useMutation({
     onSuccess: () => {
       setShowLinkModal(false);
@@ -205,6 +218,52 @@ export default function Dashboard() {
       utils.document.recent.invalidate();
     },
   });
+
+  const updateProfileMutation = trpc.user.updateProfile.useMutation({
+    onSuccess: () => {
+      setIsEditingSettings(false);
+      setSettingsError("");
+      utils.user.list.invalidate(); // If applicable
+      window.location.reload();
+    },
+    onError: (err) => {
+      setSettingsError(err.message);
+    },
+  });
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError("");
+    if (!editYear && !(isRepresentative || isPromoRepresentative || isAdmin)) {
+      setSettingsError(t("settings.yearRequired"));
+      return;
+    }
+
+    const selectedYearData = years?.find(y => y.id === Number(editYear));
+    if (selectedYearData?.hasSectors && !editSector) {
+      setSettingsError(t("settings.sectorRequired"));
+      return;
+    }
+
+    try {
+      await updateProfileMutation.mutateAsync({
+        name: editName,
+        email: editEmail,
+        yearId: editYear ? Number(editYear) : undefined,
+        sectorId: editSector ? Number(editSector) : null,
+      });
+    } catch (err) {
+      // Error handled by onError
+    }
+  };
+
+  const startEditing = () => {
+    setEditName(user?.name || "");
+    setEditEmail(user?.email || "");
+    setEditYear(user?.yearId || "");
+    setEditSector(user?.sectorId || "");
+    setIsEditingSettings(true);
+  };
 
   const selectedYearData = years?.find((y) => y.id === selectedYear);
   const showSectorSelector = selectedYearData?.hasSectors;
@@ -778,28 +837,149 @@ export default function Dashboard() {
               )}
             </>
           )}
-          <section id="settings-section" className="mt-12">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("common.settings")}</h3>
-            <div className="glass-strong p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">{t("common.fullName")}</p>
-                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.name || "-"}</p>
+          <section id="settings-section" className="mt-12 mb-20">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("common.settings")}</h3>
+              {!isEditingSettings ? (
+                <button
+                  onClick={startEditing}
+                  className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {t("common.edit")}
+                </button>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsEditingSettings(false)}
+                    className="text-sm text-[#6b6b7b] hover:underline"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    onClick={handleUpdateProfile}
+                    disabled={updateProfileMutation.isLoading}
+                    className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
+                  >
+                    <Check className="w-4 h-4" />
+                    {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {settingsError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                {settingsError}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">{t("common.email")}</p>
-                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.email || "-"}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">{t("common.ensamCode")}</p>
-                <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.ensamCode || "-"}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-[#6b6b7b]">{t("dashboard.academicTrack")}</p>
-                <p className="text-sm font-medium text-[#1a1a2e] break-words">
-                  {selectedYearData?.name || "N/A"}
-                  {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
-                </p>
-              </div>
+            )}
+
+            <div className="glass-strong p-6">
+              {!isEditingSettings ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.fullName")}</p>
+                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.name || "-"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.email")}</p>
+                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.email || "-"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#6b6b7b] mb-1">{t("common.ensamCode")}</p>
+                    <p className="text-sm font-medium text-[#1a1a2e] break-words">{user.ensamCode || "-"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#6b6b7b] mb-1">{t("dashboard.academicTrack")}</p>
+                    <p className="text-sm font-medium text-[#1a1a2e] break-words">
+                      {years?.find(y => y.id === user.yearId)?.name || "N/A"}
+                      {user.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs text-[#6b6b7b]">{t("common.fullName")}</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3 py-2 glass-input text-sm"
+                      placeholder={t("common.fullName")}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-[#6b6b7b]">{t("common.email")}</label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="w-full px-3 py-2 glass-input text-sm"
+                      placeholder={t("common.email")}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-[#6b6b7b]">{t("common.ensamCode")}</label>
+                    <input
+                      type="text"
+                      value={user.ensamCode || ""}
+                      className="w-full px-3 py-2 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70"
+                      disabled
+                    />
+                    <p className="text-[10px] text-[#6b6b7b]">{t("settings.cannotChangeCode")}</p>
+                  </div>
+                  
+                  {/* Year/Sector: only for non-reps */}
+                  {!(isRepresentative || isPromoRepresentative || isAdmin) ? (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-xs text-[#6b6b7b]">{t("dashboard.academicYear")}</label>
+                        <select
+                          value={editYear}
+                          onChange={(e) => {
+                            setEditYear(e.target.value ? Number(e.target.value) : "");
+                            setEditSector("");
+                          }}
+                          className="w-full px-3 py-2 glass-input text-sm"
+                          required
+                        >
+                          <option value="">{t("common.selectYear")}</option>
+                          {years?.map((y) => (
+                            <option key={y.id} value={y.id}>{y.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-[#6b6b7b]">{t("common.sector")}</label>
+                        <select
+                          value={editSector}
+                          onChange={(e) => setEditSector(e.target.value ? Number(e.target.value) : "")}
+                          className="w-full px-3 py-2 glass-input text-sm"
+                          disabled={!editYear || !years?.find(y => y.id === editYear)?.hasSectors}
+                          required={!!editYear && !!years?.find(y => y.id === editYear)?.hasSectors}
+                        >
+                          <option value="">{t("common.selectSector")}</option>
+                          {editSectors?.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-1">
+                      <label className="text-xs text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
+                      <div className="px-3 py-2 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                        {years?.find(y => y.id === user.yearId)?.name || "N/A"}
+                        {user.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                      </div>
+                      <p className="text-[10px] text-[#6b6b7b]">{t("settings.repCannotChangeYear")}</p>
+                    </div>
+                  )}
+                </form>
+              )}
             </div>
             <p className="text-xs text-[#6b6b7b] mt-3">
               {t("dashboard.repAccessDisclaimer")}

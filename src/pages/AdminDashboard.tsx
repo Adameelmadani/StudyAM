@@ -26,11 +26,12 @@ import {
   Link2,
   FolderOpen,
   X,
+  Check,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity";
+type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity" | "settings";
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
 export default function AdminDashboard() {
@@ -65,6 +66,10 @@ export default function AdminDashboard() {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
   const [linkError, setLinkError] = useState("");
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [settingsError, setSettingsError] = useState("");
 
   const canAccess = isAdmin || isPromoRepresentative;
   const canManageCourses = isAdmin || (isPromoRepresentative && selectedYear === user?.yearId);
@@ -212,6 +217,36 @@ export default function AdminDashboard() {
     },
   });
 
+  const updateProfileMutation = trpc.user.updateProfile.useMutation({
+    onSuccess: () => {
+      setIsEditingSettings(false);
+      setSettingsError("");
+      window.location.reload();
+    },
+    onError: (err) => {
+      setSettingsError(err.message);
+    },
+  });
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError("");
+    try {
+      await updateProfileMutation.mutateAsync({
+        name: editName,
+        email: editEmail,
+      });
+    } catch (err) {
+      // Error handled by onError
+    }
+  };
+
+  const startEditing = () => {
+    setEditName(user?.name || "");
+    setEditEmail(user?.email || "");
+    setIsEditingSettings(true);
+  };
+
   useEffect(() => {
     if (!showGrantModal) {
       setGrantEnsamCode("");
@@ -262,6 +297,7 @@ export default function AdminDashboard() {
     ...(isAdmin ? [{ id: "promo_reps" as const, label: t("Promo Reps"), icon: Shield }] : []),
     { id: "courses", label: t("admin.courses"), icon: BookOpen },
     { id: "activity", label: t("admin.activity"), icon: Activity },
+    { id: "settings", label: t("common.settings"), icon: Settings },
   ];
 
   return (
@@ -298,10 +334,6 @@ export default function AdminDashboard() {
               <span>{item.label}</span>
             </button>
           ))}
-          <button className="nav-item w-full">
-            <Settings className="w-5 h-5" />
-            <span>{t("common.settings")}</span>
-          </button>
         </nav>
 
         <div className="md:absolute md:bottom-0 md:left-0 md:right-0 p-4">
@@ -1001,6 +1033,115 @@ export default function AdminDashboard() {
                       {t("admin.noActivity")}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Settings Tab */}
+              {activeTab === "settings" && (
+                <div className="animate-fadeInUp">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-[#1a1a2e]">{t("common.settings")}</h2>
+                    {!isEditingSettings ? (
+                      <button
+                        onClick={startEditing}
+                        className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        {t("common.edit")}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setIsEditingSettings(false)}
+                          className="text-sm text-[#6b6b7b] hover:underline"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                        <button
+                          onClick={handleUpdateProfile}
+                          disabled={updateProfileMutation.isLoading}
+                          className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
+                        >
+                          <Check className="w-4 h-4" />
+                          {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {settingsError && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                      {settingsError}
+                    </div>
+                  )}
+
+                  <div className="glass-strong p-8">
+                    {!isEditingSettings ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.fullName")}</p>
+                          <p className="text-base font-medium text-[#1a1a2e]">{user?.name || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.email")}</p>
+                          <p className="text-base font-medium text-[#1a1a2e]">{user?.email || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.ensamCode")}</p>
+                          <p className="text-base font-medium text-[#1a1a2e]">{user?.ensamCode || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("dashboard.academicTrack")}</p>
+                          <p className="text-base font-medium text-[#1a1a2e]">
+                            {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
+                            {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#1a1a2e]">{t("common.fullName")}</label>
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="w-full px-4 py-3 glass-input text-sm"
+                            placeholder={t("common.fullName")}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
+                          <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="w-full px-4 py-3 glass-input text-sm"
+                            placeholder={t("common.email")}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#6b6b7b]">{t("common.ensamCode")}</label>
+                          <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                            {user?.ensamCode}
+                          </div>
+                          <p className="text-[10px] text-[#6b6b7b] italic">{t("settings.cannotChangeCode")}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
+                          <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                            {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
+                            {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                          </div>
+                          <p className="text-[10px] text-[#6b6b7b] italic">
+                            {isAdmin ? t("settings.adminCannotChangeYear") : t("settings.repCannotChangeYear")}
+                          </p>
+                        </div>
+                      </form>
+                    )}
+                  </div>
                 </div>
               )}
         </div>
