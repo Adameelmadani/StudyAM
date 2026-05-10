@@ -66,6 +66,7 @@ export default function Dashboard() {
   const [selectedSector, setSelectedSector] = useState<number | "">("");
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set([2]));
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeDocType, setActiveDocType] = useState<DocType | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -293,6 +294,18 @@ export default function Dashboard() {
     setExpandedModule(expandedModule === modId ? null : modId);
     setSelectedElement(null);
     setActiveDocType(null);
+  };
+
+  const toggleSemester = (sem: number) => {
+    setExpandedSemesters((prev) => {
+      const next = new Set(prev);
+      if (next.has(sem)) {
+        next.delete(sem);
+      } else {
+        next.add(sem);
+      }
+      return next;
+    });
   };
 
   const switchTab = (tab: "courses" | "settings") => {
@@ -657,143 +670,177 @@ export default function Dashboard() {
                   </button>
                 </div>
               )}
-              {/* Modules Grid */}
+              {/* Semesters with Modules */}
               {modulesList && modulesList.length > 0 ? (
-                <div className="space-y-8 mb-10">
+                <div className="space-y-4 mb-10">
                   {[1, 2].map((sem) => {
                     const semModules = modulesList.filter(m => m.semester === sem);
                     const yearName = years?.find(y => y.id === selectedYear)?.name || "";
                     if (yearName === "5A" && sem === 2) return null;
-                    
-                    return (
-                      <div key={sem} className="space-y-4">
-                        <h3 className="text-xl font-bold text-[#1a1a2e] pb-2 border-b border-[#fdf2f4]">
-                          {getSemesterName(yearName, sem)}
-                        </h3>
-                        {semModules.length > 0 ? (
-                          semModules.map((mod) => (
-                            <div key={mod.id} className="glass-strong overflow-hidden">
-                              <div
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => toggleModule(mod.id)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    toggleModule(mod.id);
-                                  }
-                                }}
-                                className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
-                                    <Folder className="w-6 h-6 text-white" />
-                                  </div>
-                                  <div>
-                                    <h3 className="font-semibold text-[#1a1a2e]">
-                                      {mod.name}
-                                    </h3>
-                                    <p className="text-sm text-[#6b6b7b]">
-                                      {mod.description || t("dashboard.openFolder")}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
-                                    {moduleElements && expandedModule === mod.id
-                                      ? t("dashboard.elementsCount", { count: moduleElements.length })
-                                      : t("dashboard.openFolder")}
-                                  </span>
-                                  <ChevronDown
-                                    className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
-                                      expandedModule === mod.id ? "rotate-180" : ""
-                                    }`}
-                                  />
-                                  {canManageFolders && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteModal({
-                                          type: "module",
-                                          id: mod.id,
-                                          title: mod.name,
-                                        });
-                                      }}
-                                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                    const isSemesterExpanded = expandedSemesters.has(sem);
 
-                              {expandedModule === mod.id && moduleElements && (
-                                <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
-                                  {moduleElements.length > 0 ? (
-                                    <div className="grid sm:grid-cols-2 gap-3">
-                                      {moduleElements.map((el) => (
-                                        <div
-                                          key={el.id}
-                                          role="button"
-                                          tabIndex={0}
-                                          onClick={() => {
-                                            setSelectedElement(el.id);
-                                            setActiveDocType(null);
+                    return (
+                      <div key={sem} className="glass-strong overflow-hidden">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleSemester(sem)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleSemester(sem);
+                            }
+                          }}
+                          className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                              <Folder className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-[#1a1a2e]">
+                                {getSemesterName(yearName, sem)}
+                              </h3>
+                              <p className="text-sm text-[#6b6b7b]">
+                                {semModules.length} {semModules.length === 1 ? t("common.module") : t("common.modules")}
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
+                              isSemesterExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </div>
+
+                        {isSemesterExpanded && (
+                          <div className="border-t border-[#f5d0d8] p-5 space-y-4 animate-fadeInUp">
+                            {semModules.length > 0 ? (
+                              semModules.map((mod) => (
+                                <div key={mod.id} className="glass-strong overflow-hidden">
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => toggleModule(mod.id)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        toggleModule(mod.id);
+                                      }
+                                    }}
+                                    className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                                        <Folder className="w-6 h-6 text-white" />
+                                      </div>
+                                      <div>
+                                        <h3 className="font-semibold text-[#1a1a2e]">
+                                          {mod.name}
+                                        </h3>
+                                        <p className="text-sm text-[#6b6b7b]">
+                                          {mod.description || t("dashboard.openFolder")}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                                        {moduleElements && expandedModule === mod.id
+                                          ? t("dashboard.elementsCount", { count: moduleElements.length })
+                                          : t("dashboard.openFolder")}
+                                      </span>
+                                      <ChevronDown
+                                        className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
+                                          expandedModule === mod.id ? "rotate-180" : ""
+                                        }`}
+                                      />
+                                      {canManageFolders && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteModal({
+                                              type: "module",
+                                              id: mod.id,
+                                              title: mod.name,
+                                            });
                                           }}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                              e.preventDefault();
-                                              setSelectedElement(el.id);
-                                              setActiveDocType(null);
-                                            }
-                                          }}
-                                          className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
+                                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         >
-                                          <div className="flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-3">
-                                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
-                                                <Folder className="w-4 h-4 text-[#b24760]" />
-                                              </div>
-                                              <div>
-                                                <h4 className="font-medium text-[#1a1a2e] mb-0.5">
-                                                  {el.name}
-                                                </h4>
-                                                <p className="text-xs text-[#6b6b7b]">
-                                                  {el.description || t("dashboard.openFolder")}
-                                                </p>
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {expandedModule === mod.id && moduleElements && (
+                                    <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
+                                      {moduleElements.length > 0 ? (
+                                        <div className="grid sm:grid-cols-2 gap-3">
+                                          {moduleElements.map((el) => (
+                                            <div
+                                              key={el.id}
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => {
+                                                setSelectedElement(el.id);
+                                                setActiveDocType(null);
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                  e.preventDefault();
+                                                  setSelectedElement(el.id);
+                                                  setActiveDocType(null);
+                                                }
+                                              }}
+                                              className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
+                                            >
+                                              <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
+                                                    <Folder className="w-4 h-4 text-[#b24760]" />
+                                                  </div>
+                                                  <div>
+                                                    <h4 className="font-medium text-[#1a1a2e] mb-0.5">
+                                                      {el.name}
+                                                    </h4>
+                                                    <p className="text-xs text-[#6b6b7b]">
+                                                      {el.description || t("dashboard.openFolder")}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                {canManageFolders && (
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setDeleteModal({
+                                                        type: "element",
+                                                        id: el.id,
+                                                        title: el.name,
+                                                      });
+                                                    }}
+                                                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                  >
+                                                    <Trash2 className="w-4 h-4" />
+                                                  </button>
+                                                )}
                                               </div>
                                             </div>
-                                            {canManageFolders && (
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setDeleteModal({
-                                                    type: "element",
-                                                    id: el.id,
-                                                    title: el.name,
-                                                  });
-                                                }}
-                                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                              >
-                                                <Trash2 className="w-4 h-4" />
-                                              </button>
-                                            )}
-                                          </div>
+                                          ))}
                                         </div>
-                                      ))}
+                                      ) : (
+                                        <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                          {t("dashboard.noModules")}
+                                        </p>
+                                      )}
                                     </div>
-                                  ) : (
-                                    <p className="text-sm text-[#6b6b7b] text-center py-4">
-                                      {t("dashboard.noModules")}
-                                    </p>
                                   )}
                                 </div>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-[#6b6b7b] bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                            {t("dashboard.noModulesInSemester", { defaultValue: "No modules yet." })}
+                              ))
+                            ) : (
+                              <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                {t("dashboard.noModulesInSemester", { defaultValue: "No modules yet." })}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
