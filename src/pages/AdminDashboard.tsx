@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { FOLDER_COLORS } from "@/const";
 
 type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity" | "settings";
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
@@ -67,8 +68,10 @@ export default function AdminDashboard() {
   const [moduleSemester, setModuleSemester] = useState<number>(1);
   const [moduleSector, setModuleSector] = useState<number | "">("");
   const [moduleSectorsList, setModuleSectorsList] = useState<number[]>([]);
+  const [moduleColor, setModuleColor] = useState(FOLDER_COLORS[0]);
   const [elementName, setElementName] = useState("");
   const [elementModule, setElementModule] = useState<number | "">("");
+  const [elementColor, setElementColor] = useState(FOLDER_COLORS[0]);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | "">("");
   const [selectedSector, setSelectedSector] = useState<number | "">("");
@@ -887,6 +890,14 @@ export default function AdminDashboard() {
                               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                 {folderTypes.map((type) => {
                                   const count = elementDocs?.filter((d) => d.type === type).length || 0;
+                                  const colorMap: Record<string, string> = {
+                                    cours: "#3498db",
+                                    exam: "#e74c3c",
+                                    test: "#f39c12",
+                                    tp: "#2ecc71",
+                                    resume: "#9b59b6",
+                                  };
+                                  const typeColor = colorMap[type];
                                   return (
                                     <button
                                       key={type}
@@ -894,8 +905,16 @@ export default function AdminDashboard() {
                                       className="glass-strong p-4 text-left hover:shadow-lg transition-all"
                                     >
                                       <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
-                                          <Folder className="w-5 h-5 text-[#b24760]" />
+                                        <div
+                                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                          style={{
+                                            backgroundColor: typeColor + "20",
+                                          }}
+                                        >
+                                          <Folder
+                                            className="w-5 h-5"
+                                            style={{ color: typeColor }}
+                                          />
                                         </div>
                                         <div>
                                           <p className="font-medium text-[#1a1a2e]">
@@ -1067,7 +1086,12 @@ export default function AdminDashboard() {
                                                   className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
                                                 >
                                                   <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                                                    <div
+                                                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                                      style={{
+                                                        backgroundColor: mod.color || "#b24760"
+                                                      }}
+                                                    >
                                                       <Folder className="w-6 h-6 text-white" />
                                                     </div>
                                                     <div>
@@ -1122,8 +1146,16 @@ export default function AdminDashboard() {
                                                           >
                                                             <div className="flex items-center justify-between gap-3">
                                                               <div className="flex items-center gap-3">
-                                                                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center">
-                                                                  <Folder className="w-4 h-4 text-[#b24760]" />
+                                                                <div
+                                                                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                                                                  style={{
+                                                                    backgroundColor: (el.color || "#b24760") + "20",
+                                                                  }}
+                                                                >
+                                                                  <Folder
+                                                                    className="w-4 h-4"
+                                                                    style={{ color: el.color || "#b24760" }}
+                                                                  />
                                                                 </div>
                                                                 <div>
                                                                   <h4 className="font-medium text-[#1a1a2e] mb-0.5">
@@ -1432,6 +1464,7 @@ export default function AdminDashboard() {
                     semester: moduleSemester,
                     sectorId: moduleSector ? Number(moduleSector) : undefined,
                     sectorIds: moduleSectorsList.length > 0 ? moduleSectorsList : undefined,
+                    color: moduleColor,
                   });
                 }
               }}
@@ -1511,6 +1544,24 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                <div className="grid grid-cols-10 gap-2">
+                  {FOLDER_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setModuleColor(color)}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        moduleColor === color
+                          ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                          : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -1540,6 +1591,7 @@ export default function AdminDashboard() {
                   createElementMutation.mutate({
                     name: elementName,
                     moduleId: Number(elementModule),
+                    color: elementColor,
                   });
                 }
               }}
@@ -1568,6 +1620,24 @@ export default function AdminDashboard() {
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                <div className="grid grid-cols-10 gap-2">
+                  {FOLDER_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setElementColor(color)}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        elementColor === color
+                          ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                          : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

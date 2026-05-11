@@ -73,6 +73,7 @@ export const moduleRouter = createRouter({
         semester: z.number().int().min(1).max(2),
         sectorIds: z.array(z.number().int().positive()).optional(),
         icon: z.string().optional(),
+        color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -117,6 +118,7 @@ export const moduleRouter = createRouter({
         sectorId: isRepresentative ? (ctx.user.sectorId || null) : (input.sectorId || null),
         semester: input.semester,
         icon: input.icon || "book",
+        color: input.color || "#b24760",
       });
       const modId = Number(result[0].insertId);
 
@@ -141,6 +143,7 @@ export const moduleRouter = createRouter({
         description: z.string().optional(),
         semester: z.number().int().min(1).max(2).optional(),
         icon: z.string().optional(),
+        color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
         sectorIds: z.array(z.number().int().positive()).optional(),
       })
     )

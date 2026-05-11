@@ -99,6 +99,7 @@ export const elementRouter = createRouter({
         name: z.string().min(1, "Element name is required"),
         description: z.string().optional(),
         moduleId: z.number().int().positive(),
+        color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -146,6 +147,7 @@ export const elementRouter = createRouter({
         name: input.name,
         description: input.description || null,
         moduleId: input.moduleId,
+        color: input.color || "#b24760",
       });
       const elId = Number(result[0].insertId);
       return db.query.elements.findFirst({ where: eq(elements.id, elId) });
@@ -157,6 +159,7 @@ export const elementRouter = createRouter({
         id: z.number().int().positive(),
         name: z.string().optional(),
         description: z.string().optional(),
+        color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {

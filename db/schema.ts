@@ -71,6 +71,7 @@ export const modules = mysqlTable("modules", {
   sectorId: bigint("sectorId", { mode: "number", unsigned: true }),
   semester: int("semester").default(1).notNull(),
   icon: varchar("icon", { length: 50 }).default("book"),
+  color: varchar("color", { length: 7 }).default("#b24760"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -92,6 +93,7 @@ export const elements = mysqlTable("elements", {
   name: varchar("name", { length: 100 }).notNull(),
   moduleId: bigint("moduleId", { mode: "number", unsigned: true }).notNull(),
   description: text("description"),
+  color: varchar("color", { length: 7 }).default("#b24760"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
