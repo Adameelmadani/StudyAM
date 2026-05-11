@@ -1451,10 +1451,16 @@ export default function AdminDashboard() {
 
       {/* Module Modal */}
       {showModuleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("dashboard.addModule")}</h3>
-            <form
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addModule")}</h3>
+                <button onClick={() => setShowModuleModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
+              </div>
+              <form
               onSubmit={(e) => {
                 e.preventDefault();
                 if (moduleName && moduleYear) {
@@ -1575,16 +1581,23 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Element Modal */}
       {showElementModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <h3 className="text-lg font-semibold text-[#1a1a2e] mb-4">{t("dashboard.addElement")}</h3>
-            <form
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addElement")}</h3>
+                <button onClick={() => setShowElementModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
+              </div>
+              <form
               onSubmit={(e) => {
                 e.preventDefault();
                 if (elementName && elementModule) {
@@ -1652,6 +1665,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

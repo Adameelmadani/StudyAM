@@ -1163,21 +1163,22 @@ export default function Dashboard() {
       )}
 
       {showModuleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addModule")}</h3>
-                <p className="text-xs text-[#6b6b7b] mt-1">
-                  {t("common.year")}: {selectedYearData?.name || t("common.selectYear")}
-                  {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addModule")}</h3>
+                  <p className="text-xs text-[#6b6b7b] mt-1">
+                    {t("common.year")}: {selectedYearData?.name || t("common.selectYear")}
+                    {selectedSectorData ? ` • ${selectedSectorData.name}` : ""}
+                  </p>
+                </div>
+                <button onClick={() => setShowModuleModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
               </div>
-              <button onClick={() => setShowModuleModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
-                <X className="w-5 h-5 text-[#6b6b7b]" />
-              </button>
-            </div>
-            <form
+              <form
               onSubmit={(e) => {
                 e.preventDefault();
                 setModuleError("");
@@ -1258,28 +1259,30 @@ export default function Dashboard() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
 
       {showElementModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addElement")}</h3>
-                <p className="text-xs text-[#6b6b7b] mt-1">
-                  Module:{" "}
-                  {elementModule
-                    ? modulesList?.find((mod) => mod.id === elementModule)?.name || "Selected module"
-                    : t("dashboard.selectModule")}
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addElement")}</h3>
+                  <p className="text-xs text-[#6b6b7b] mt-1">
+                    Module:{" "}
+                    {elementModule
+                      ? modulesList?.find((mod) => mod.id === elementModule)?.name || "Selected module"
+                      : t("dashboard.selectModule")}
+                  </p>
+                </div>
+                <button onClick={() => setShowElementModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
               </div>
-              <button onClick={() => setShowElementModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
-                <X className="w-5 h-5 text-[#6b6b7b]" />
-              </button>
-            </div>
-            <form
+              <form
               onSubmit={(e) => {
                 e.preventDefault();
                 setElementError("");
@@ -1358,6 +1361,7 @@ export default function Dashboard() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
