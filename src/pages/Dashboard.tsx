@@ -97,6 +97,8 @@ export default function Dashboard() {
   const [editYear, setEditYear] = useState<number | "">("");
   const [editSector, setEditSector] = useState<number | "">("");
   const [settingsError, setSettingsError] = useState("");
+  const [editingModule, setEditingModule] = useState<{ id: number; name: string; color: string } | null>(null);
+  const [editingElement, setEditingElement] = useState<{ id: number; name: string; color: string } | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -235,6 +237,20 @@ export default function Dashboard() {
         utils.document.list.invalidate({ elementId: selectedElement });
       }
       utils.document.recent.invalidate();
+    },
+  });
+
+  const updateModuleMutation = trpc.module.update.useMutation({
+    onSuccess: () => {
+      setEditingModule(null);
+      utils.module.list.invalidate();
+    },
+  });
+
+  const updateElementMutation = trpc.element.update.useMutation({
+    onSuccess: () => {
+      setEditingElement(null);
+      utils.element.list.invalidate();
     },
   });
 
@@ -783,19 +799,31 @@ export default function Dashboard() {
                                         }`}
                                       />
                                       {canManageFolders && (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteModal({
-                                              type: "module",
-                                              id: mod.id,
-                                              title: mod.name,
-                                            });
-                                          }}
-                                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingModule({ id: mod.id, name: mod.name, color: mod.color || "#b24760" });
+                                            }}
+                                            className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title={t("common.edit")}
+                                          >
+                                            <Pencil className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setDeleteModal({
+                                                type: "module",
+                                                id: mod.id,
+                                                title: mod.name,
+                                              });
+                                            }}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -845,19 +873,31 @@ export default function Dashboard() {
                                                   </div>
                                                 </div>
                                                 {canManageFolders && (
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setDeleteModal({
-                                                        type: "element",
-                                                        id: el.id,
-                                                        title: el.name,
-                                                      });
-                                                    }}
-                                                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                  >
-                                                    <Trash2 className="w-4 h-4" />
-                                                  </button>
+                                                  <div className="flex items-center gap-1">
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingElement({ id: el.id, name: el.name, color: el.color || "#b24760" });
+                                                      }}
+                                                      className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                      title={t("common.edit")}
+                                                    >
+                                                      <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteModal({
+                                                          type: "element",
+                                                          id: el.id,
+                                                          title: el.name,
+                                                        });
+                                                      }}
+                                                      className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                      <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                  </div>
                                                 )}
                                               </div>
                                             </div>
@@ -1406,6 +1446,140 @@ export default function Dashboard() {
                   ? t("common.loading")
                   : t("common.delete")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingModule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("common.edit")} {t("common.module")}</h3>
+                <button onClick={() => setEditingModule(null)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateModuleMutation.mutate({
+                    id: editingModule.id,
+                    name: editingModule.name,
+                    color: editingModule.color,
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
+                  <input
+                    type="text"
+                    value={editingModule.name}
+                    onChange={(e) => setEditingModule({ ...editingModule, name: e.target.value })}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                  <div className="grid grid-cols-10 gap-2">
+                    {FOLDER_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setEditingModule({ ...editingModule, color })}
+                        className={`w-8 h-8 rounded-full transition-all ${
+                          editingModule.color === color
+                            ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                            : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingModule(null)}
+                    className="flex-1 btn-glass"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button type="submit" className="flex-1 btn-primary">
+                    {t("common.save")}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingElement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="glass-strong w-full max-w-md animate-fadeInUp">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("common.edit")} {t("common.element")}</h3>
+                <button onClick={() => setEditingElement(null)} className="p-1 rounded-lg hover:bg-[#fdf2f4] shrink-0">
+                  <X className="w-5 h-5 text-[#6b6b7b]" />
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateElementMutation.mutate({
+                    id: editingElement.id,
+                    name: editingElement.name,
+                    color: editingElement.color,
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
+                  <input
+                    type="text"
+                    value={editingElement.name}
+                    onChange={(e) => setEditingElement({ ...editingElement, name: e.target.value })}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                  <div className="grid grid-cols-10 gap-2">
+                    {FOLDER_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setEditingElement({ ...editingElement, color })}
+                        className={`w-8 h-8 rounded-full transition-all ${
+                          editingElement.color === color
+                            ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                            : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingElement(null)}
+                    className="flex-1 btn-glass"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button type="submit" className="flex-1 btn-primary">
+                    {t("common.save")}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
