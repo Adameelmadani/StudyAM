@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FileText, ChevronDown, AlertCircle, Video, Presentation, Table } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { getThumbnail } from "@/lib/fileTypeDetection";
@@ -32,6 +33,7 @@ export function DocumentCard({
   showPreview = true,
   fileType = "file",
 }: DocumentCardProps) {
+  const { t } = useTranslation();
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(showPreview);
   const thumbnail = getThumbnail(url);
@@ -68,6 +70,9 @@ export function DocumentCard({
               className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[type] || "bg-gray-100 text-gray-700"}`}
             >
               {typeLabel || type}
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500 uppercase tracking-wider">
+              {t(`fileTypes.${fileType}`)}
             </span>
             <span className="text-xs text-[#6b6b7b]">By {uploaderName}</span>
             <span className="text-xs text-[#6b6b7b]">

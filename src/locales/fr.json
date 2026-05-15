@@ -53,6 +53,12 @@
     "tp": "TP",
     "resume": "Résumé"
   },
+  "fileTypes": {
+    "file": "Fichier",
+    "presentation": "Représentation",
+    "spreadsheets": "Tableau",
+    "video": "Vidéo"
+  },
   "landing": {
     "heroTag": "Plateforme de cours ENSAM",
     "heroTitle": "Vos cours, organisés",

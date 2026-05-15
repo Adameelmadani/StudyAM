@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, Trash2, Video, Presentation, Table, FileText } from "lucide-react";
 import { extractGoogleDriveFileId, getThumbnail } from "@/lib/fileTypeDetection";
 
@@ -29,6 +30,7 @@ export function ThumbnailCard({
   canDelete = false,
   fileType = "file",
 }: ThumbnailCardProps) {
+  const { t } = useTranslation();
   const [previewError, setPreviewError] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(true);
   const fileId = extractGoogleDriveFileId(url);
@@ -111,6 +113,9 @@ export function ThumbnailCard({
           }`}
         >
           {typeLabel || type}
+        </span>
+        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold mb-1.5 ml-1.5 bg-gray-100 text-gray-500 uppercase tracking-wider">
+          {t(`fileTypes.${fileType}`)}
         </span>
         <h4 className="font-medium text-[#1a1a2e] truncate mb-0.5 line-clamp-2 text-sm">
           {title}

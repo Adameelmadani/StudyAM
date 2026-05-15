@@ -53,6 +53,12 @@
     "tp": "TP",
     "resume": "Summary"
   },
+  "fileTypes": {
+    "file": "File",
+    "presentation": "Representation",
+    "spreadsheets": "Table",
+    "video": "Video"
+  },
   "landing": {
     "heroTag": "ENSAM Course Platform",
     "heroTitle": "Your Courses, Organized",
