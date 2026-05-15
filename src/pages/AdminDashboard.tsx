@@ -253,14 +253,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const isGoogleDriveUrl = (url: string) =>
+  const isGoogleDriveYoutubeUrl = (url: string) =>
     /https?:\/\/(drive|docs)\.google\.com\//i.test(url);
 
   useEffect(() => {
     if (linkUrl) {
       const detected = detectFileTypeFromUrl(linkUrl);
       setDetectedFileType(detected);
-      if (detected && (isGoogleDriveUrl(linkUrl) || detected === "video")) {
+      if (detected && (isGoogleDriveYoutubeUrl(linkUrl) || detected === "video")) {
         setLinkFileType(detected as any);
       }
     } else {
@@ -570,57 +570,57 @@ export default function AdminDashboard() {
                     <thead>
                       <tr className="border-b border-[#f5d0d8]">
                         <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.email")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentsData?.users.map((u) => (
-                      <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
-                        <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
-                        <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
-                        <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.email}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
-                            {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {u.sectorId ? (
-                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
-                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
-                            </span>
-                          ) : (
-                            <span className="text-[#6b6b7b] text-sm">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setGrantEnsamCode(u.ensamCode || "");
-                                setShowGrantModal(true);
-                              }}
-                              className="p-1.5 rounded-lg hover:bg-[#fdf2f4] text-[#b24760]"
-                              title={t("admin.grantRepAccess")}
-                            >
-                              <Shield className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(u.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                              title={t("common.delete")}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.email")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
                       </tr>
-                    ))}
-                  </tbody>
+                    </thead>
+                    <tbody>
+                      {studentsData?.users.map((u) => (
+                        <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
+                          <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
+                          <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
+                          <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.email}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                              {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {u.sectorId ? (
+                              <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                                {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                              </span>
+                            ) : (
+                              <span className="text-[#6b6b7b] text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setGrantEnsamCode(u.ensamCode || "");
+                                  setShowGrantModal(true);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-[#fdf2f4] text-[#b24760]"
+                                title={t("admin.grantRepAccess")}
+                              >
+                                <Shield className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(u.id)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                                title={t("common.delete")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
                 {studentsData?.users.length === 0 && (
@@ -662,62 +662,61 @@ export default function AdminDashboard() {
                     <thead>
                       <tr className="border-b border-[#f5d0d8]">
                         <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {repsData?.users.map((u) => (
-                      <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
-                        <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
-                        <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
-                            {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {u.sectorId ? (
-                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
-                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {repsData?.users.map((u) => (
+                        <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
+                          <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
+                          <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                              {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
                             </span>
-                          ) : (
-                            <span className="text-[#6b6b7b] text-sm">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            u.isApproved
+                          </td>
+                          <td className="px-6 py-4">
+                            {u.sectorId ? (
+                              <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                                {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                              </span>
+                            ) : (
+                              <span className="text-[#6b6b7b] text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.isApproved
                               ? "bg-green-100 text-green-700"
                               : "bg-orange-100 text-orange-700"
-                          }`}>
-                            {u.isApproved ? t("common.active") : t("common.pending")}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => revokeMutation.mutate({ userId: u.id })}
-                              className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
-                              title={t("admin.revoke")}
-                            >
-                              <Shield className="w-4 h-4 rotate-180" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(u.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                              title={t("common.delete")}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                              }`}>
+                              {u.isApproved ? t("common.active") : t("common.pending")}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => revokeMutation.mutate({ userId: u.id })}
+                                className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
+                                title={t("admin.revoke")}
+                              >
+                                <Shield className="w-4 h-4 rotate-180" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(u.id)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                                title={t("common.delete")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
                 {repsData?.users.length === 0 && (
@@ -761,62 +760,61 @@ export default function AdminDashboard() {
                     <thead>
                       <tr className="border-b border-[#f5d0d8]">
                         <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.name")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {promoRepsData?.users.map((u) => (
-                      <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
-                        <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
-                        <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium">
-                            {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {u.sectorId ? (
-                            <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
-                              {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.ensamCode")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.year")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.sector")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.status")}</th>
+                        <th className="text-left px-6 py-3 text-xs font-semibold text-[#6b6b7b] uppercase tracking-wider">{t("common.actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {promoRepsData?.users.map((u) => (
+                        <tr key={u.id} className="border-b border-[#f5d0d8]/50 hover:bg-[#fdf2f4]/30">
+                          <td className="px-6 py-4 text-sm text-[#1a1a2e] font-medium">{u.name}</td>
+                          <td className="px-6 py-4 text-sm text-[#6b6b7b]">{u.ensamCode}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium">
+                              {years?.find((y) => y.id === u.yearId)?.name || "N/A"}
                             </span>
-                          ) : (
-                            <span className="text-[#6b6b7b] text-sm">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            u.isApproved
+                          </td>
+                          <td className="px-6 py-4">
+                            {u.sectorId ? (
+                              <span className="px-2 py-1 rounded-full bg-[#f5f3ff] text-[#6b21a8] text-xs font-medium">
+                                {allSectors?.find((s) => s.id === u.sectorId)?.name || "N/A"}
+                              </span>
+                            ) : (
+                              <span className="text-[#6b6b7b] text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.isApproved
                               ? "bg-green-100 text-green-700"
                               : "bg-orange-100 text-orange-700"
-                          }`}>
-                            {u.isApproved ? t("common.active") : t("common.pending")}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => revokeMutation.mutate({ userId: u.id })}
-                              className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
-                              title={t("admin.revoke")}
-                            >
-                              <Shield className="w-4 h-4 rotate-180" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(u.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
-                              title={t("common.delete")}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                              }`}>
+                              {u.isApproved ? t("common.active") : t("common.pending")}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => revokeMutation.mutate({ userId: u.id })}
+                                className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-600"
+                                title={t("admin.revoke")}
+                              >
+                                <Shield className="w-4 h-4 rotate-180" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(u.id)}
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                                title={t("common.delete")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
                 {promoRepsData?.users.length === 0 && (
@@ -899,526 +897,524 @@ export default function AdminDashboard() {
                     className="btn-glass flex items-center gap-2 text-sm disabled:opacity-50"
                     disabled={!modulesList || modulesList.length === 0}
                   >
-                            <FileText className="w-4 h-4" />
-                            {t("dashboard.addElement")}
-                          </button>
-                        </div>
-                      )}
-                      {/* Courses Content */}
-                      {selectedElement ? (
-                        <div className="animate-fadeInUp">
-                          <button
-                            onClick={() => {
-                              setSelectedElement(null);
-                              setActiveDocType(null);
-                            }}
-                            className="flex items-center gap-1 text-sm text-[#b24760] mb-4 hover:underline"
-                          >
-                            <ArrowLeft className="w-4 h-4" /> {t("common.backToModules")}
-                          </button>
+                    <FileText className="w-4 h-4" />
+                    {t("dashboard.addElement")}
+                  </button>
+                </div>
+              )}
+              {/* Courses Content */}
+              {selectedElement ? (
+                <div className="animate-fadeInUp">
+                  <button
+                    onClick={() => {
+                      setSelectedElement(null);
+                      setActiveDocType(null);
+                    }}
+                    className="flex items-center gap-1 text-sm text-[#b24760] mb-4 hover:underline"
+                  >
+                    <ArrowLeft className="w-4 h-4" /> {t("common.backToModules")}
+                  </button>
 
-                          <div className="glass-strong p-6 mb-6">
-                            <h2 className="text-xl font-semibold text-[#1a1a2e] mb-2">
-                              {moduleElements?.find((e) => e.id === selectedElement)?.name}
-                            </h2>
-                            <p className="text-sm text-[#6b6b7b]">
-                              {t("dashboard.docsAvailable", { count: elementDocs?.length || 0 })}
-                            </p>
-                          </div>
+                  <div className="glass-strong p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-[#1a1a2e] mb-2">
+                      {moduleElements?.find((e) => e.id === selectedElement)?.name}
+                    </h2>
+                    <p className="text-sm text-[#6b6b7b]">
+                      {t("dashboard.docsAvailable", { count: elementDocs?.length || 0 })}
+                    </p>
+                  </div>
 
-                          {!activeDocType ? (
-                            <>
-                              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                {folderTypes.map((type) => {
-                                  const count = elementDocs?.filter((d) => d.type === type).length || 0;
-                                  const colorMap: Record<string, string> = {
-                                    cours: "#3498db",
-                                    exam: "#e74c3c",
-                                    test: "#f39c12",
-                                    tp: "#2ecc71",
-                                    resume: "#9b59b6",
-                                  };
-                                  const typeColor = colorMap[type];
-                                  return (
-                                    <button
-                                      key={type}
-                                      onClick={() => setActiveDocType(type)}
-                                      className="glass-strong p-4 text-left hover:shadow-lg transition-all"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div
-                                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                          style={{
-                                            backgroundColor: typeColor + "20",
-                                          }}
-                                        >
-                                          <Folder
-                                            className="w-5 h-5"
-                                            style={{ color: typeColor }}
-                                          />
-                                        </div>
-                                        <div>
-                                          <p className="font-medium text-[#1a1a2e]">
-                                            {t(`types.${type}`)}
-                                          </p>
-                                          <p className="text-xs text-[#6b6b7b]">
-                                            {count} {count === 1 ? t("common.item") : t("common.items")}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <p className="text-xs text-[#6b6b7b]">
-                                {t("dashboard.selectFolderDesc")}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <button
-                                  onClick={() => setActiveDocType(null)}
-                                  className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
+                  {!activeDocType ? (
+                    <>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        {folderTypes.map((type) => {
+                          const count = elementDocs?.filter((d) => d.type === type).length || 0;
+                          const colorMap: Record<string, string> = {
+                            cours: "#3498db",
+                            exam: "#e74c3c",
+                            test: "#f39c12",
+                            tp: "#2ecc71",
+                            resume: "#9b59b6",
+                          };
+                          const typeColor = colorMap[type];
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => setActiveDocType(type)}
+                              className="glass-strong p-4 text-left hover:shadow-lg transition-all"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                  style={{
+                                    backgroundColor: typeColor + "20",
+                                  }}
                                 >
-                                  <ArrowLeft className="w-4 h-4 rotate-180" /> {t("common.backToFolders")}
-                                </button>
-                                {canManageCourses && (
-                                  <button
-                                    onClick={() => {
-                                      setLinkType(activeDocType);
-                                      setLinkError("");
-                                      setShowLinkModal(true);
-                                    }}
-                                    className="btn-primary flex items-center gap-2 text-sm"
-                                  >
-                                    <Link2 className="w-4 h-4" />
-                                    {t("dashboard.addDriveUrl")}
-                                  </button>
-                                )}
-                              </div>
-
-                              {activeDocs && activeDocs.length > 0 ? (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                  {activeDocs.map((doc) => (
-                                    <ThumbnailCard
-                                      key={doc.id}
-                                      id={doc.id}
-                                      title={doc.title}
-                                      type={doc.type}
-                                      url={doc.url}
-                                      createdAt={doc.createdAt}
-                                      fileType={doc.fileType}
-                                      typeColors={typeColors}
-                                      typeLabel={t(`types.${doc.type}`)}
-                                      onClick={() => {
-                                        const embedUrl = getEmbedUrl(doc.url);
-                                        if (embedUrl) {
-                                          setPreviewFile({
-                                            url: embedUrl,
-                                            title: doc.title,
-                                          });
-                                        } else {
-                                          window.open(doc.url, "_blank");
-                                        }
-                                      }}
-                                      onDelete={() =>
-                                        setDeleteModal({
-                                          type: "document",
-                                          id: doc.id,
-                                          title: doc.title,
-                                        })
-                                      }
-                                      canDelete={canManageCourses}
-                                    />
-                                  ))}
+                                  <Folder
+                                    className="w-5 h-5"
+                                    style={{ color: typeColor }}
+                                  />
                                 </div>
-                              ) : (
-                                <div className="glass-strong p-12 text-center">
-                                  <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                                  <p className="text-[#6b6b7b]">
-                                    {t("dashboard.noDocsYet", { type: t(`types.${activeDocType}`).toLowerCase() })}
+                                <div>
+                                  <p className="font-medium text-[#1a1a2e]">
+                                    {t(`types.${type}`)}
+                                  </p>
+                                  <p className="text-xs text-[#6b6b7b]">
+                                    {count} {count === 1 ? t("common.item") : t("common.items")}
                                   </p>
                                 </div>
-                              )}
-                            </>
-                          )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-[#6b6b7b]">
+                        {t("dashboard.selectFolderDesc")}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <button
+                          onClick={() => setActiveDocType(null)}
+                          className="flex items-center gap-1 text-sm text-[#b24760] hover:underline"
+                        >
+                          <ArrowLeft className="w-4 h-4 rotate-180" /> {t("common.backToFolders")}
+                        </button>
+                        {canManageCourses && (
+                          <button
+                            onClick={() => {
+                              setLinkType(activeDocType);
+                              setLinkError("");
+                              setShowLinkModal(true);
+                            }}
+                            className="btn-primary flex items-center gap-2 text-sm"
+                          >
+                            <Link2 className="w-4 h-4" />
+                            {t("dashboard.addDriveYoutubeUrl")}
+                          </button>
+                        )}
+                      </div>
+
+                      {activeDocs && activeDocs.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {activeDocs.map((doc) => (
+                            <ThumbnailCard
+                              key={doc.id}
+                              id={doc.id}
+                              title={doc.title}
+                              type={doc.type}
+                              url={doc.url}
+                              createdAt={doc.createdAt}
+                              fileType={doc.fileType}
+                              typeColors={typeColors}
+                              typeLabel={t(`types.${doc.type}`)}
+                              onClick={() => {
+                                const embedUrl = getEmbedUrl(doc.url);
+                                if (embedUrl) {
+                                  setPreviewFile({
+                                    url: embedUrl,
+                                    title: doc.title,
+                                  });
+                                } else {
+                                  window.open(doc.url, "_blank");
+                                }
+                              }}
+                              onDelete={() =>
+                                setDeleteModal({
+                                  type: "document",
+                                  id: doc.id,
+                                  title: doc.title,
+                                })
+                              }
+                              canDelete={canManageCourses}
+                            />
+                          ))}
                         </div>
                       ) : (
-                        <>
-                          {/* Modules List */}
-                          {selectedYear ? (
-                            modulesList && modulesList.length > 0 ? (
-                              <div className="space-y-4 mb-10">
-                                {[1, 2].map((sem) => {
-                                  const semModules = modulesList.filter(m => m.semester === sem);
-                                  const yearName = years?.find(y => y.id === selectedYear)?.name || "";
-                                  if (yearName === "5A" && sem === 2) return null;
-                                  const isSemesterExpanded = expandedSemesters.has(sem);
-
-                                  return (
-                                    <div key={sem} className="glass-strong overflow-hidden">
-                                      <div
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => toggleSemester(sem)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            toggleSemester(sem);
-                                          }
-                                        }}
-                                        className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
-                                      >
-                                        <div className="flex items-center gap-4">
-                                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
-                                            <Folder className="w-6 h-6 text-white" />
-                                          </div>
-                                          <div>
-                                            <h3 className="font-semibold text-[#1a1a2e]">
-                                              {getSemesterName(yearName, sem)}
-                                            </h3>
-                                            <p className="text-sm text-[#6b6b7b]">
-                                              {semModules.length} {semModules.length === 1 ? t("common.module") : t("common.modules")}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <ChevronDown
-                                          className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
-                                            isSemesterExpanded ? "rotate-180" : ""
-                                          }`}
-                                        />
-                                      </div>
-
-                                      {isSemesterExpanded && (
-                                        <div className="border-t border-[#f5d0d8] p-5 space-y-4 animate-fadeInUp">
-                                          {semModules.length > 0 ? (
-                                            semModules.map((mod) => (
-                                              <div key={mod.id} className="glass-strong overflow-hidden">
-                                                <div
-                                                  role="button"
-                                                  tabIndex={0}
-                                                  onClick={() => toggleModule(mod.id)}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                      e.preventDefault();
-                                                      toggleModule(mod.id);
-                                                    }
-                                                  }}
-                                                  className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
-                                                >
-                                                  <div className="flex items-center gap-4">
-                                                    <div
-                                                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                                                      style={{
-                                                        backgroundColor: mod.color || "#b24760"
-                                                      }}
-                                                    >
-                                                      <Folder className="w-6 h-6 text-white" />
-                                                    </div>
-                                                    <div>
-                                                      <h3 className="font-semibold text-[#1a1a2e]">
-                                                        {mod.name}
-                                                      </h3>
-                                                      <p className="text-sm text-[#6b6b7b]">
-                                                        {mod.description || t("dashboard.openFolder")}
-                                                      </p>
-                                                    </div>
-                                                  </div>
-                                                  <div className="flex items-center gap-3">
-                                                    <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
-                                                      {moduleElements && expandedModule === mod.id
-                                                        ? t("dashboard.elementsCount", { count: moduleElements.length })
-                                                        : t("dashboard.openFolder")}
-                                                    </span>
-                                                    <ChevronDown
-                                                      className={`w-5 h-5 text-[#6b6b7b] transition-transform ${
-                                                        expandedModule === mod.id ? "rotate-180" : ""
-                                                      }`}
-                                                    />
-                                                    {canManageCourses && (
-                                                      <div className="flex items-center gap-1">
-                                                        <button
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingModule({ id: mod.id, name: mod.name, color: mod.color || "#b24760" });
-                                                          }}
-                                                          className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                          title={t("common.edit")}
-                                                        >
-                                                          <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setDeleteModal({
-                                                              type: "module",
-                                                              id: mod.id,
-                                                              title: mod.name,
-                                                            });
-                                                          }}
-                                                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        >
-                                                          <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                </div>
-
-                                                {expandedModule === mod.id && moduleElements && (
-                                                  <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
-                                                    {moduleElements.length > 0 ? (
-                                                      <div className="grid sm:grid-cols-2 gap-3">
-                                                        {moduleElements.map((el) => (
-                                                          <div
-                                                            key={el.id}
-                                                            role="button"
-                                                            tabIndex={0}
-                                                            onClick={() => setSelectedElement(el.id)}
-                                                            className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
-                                                          >
-                                                            <div className="flex items-center justify-between gap-3">
-                                                              <div className="flex items-center gap-3">
-                                                                <div
-                                                                  className="w-9 h-9 rounded-lg flex items-center justify-center"
-                                                                  style={{
-                                                                    backgroundColor: (el.color || "#b24760") + "20",
-                                                                  }}
-                                                                >
-                                                                  <Folder
-                                                                    className="w-4 h-4"
-                                                                    style={{ color: el.color || "#b24760" }}
-                                                                  />
-                                                                </div>
-                                                                <div>
-                                                                  <h4 className="font-medium text-[#1a1a2e] mb-0.5">
-                                                                    {el.name}
-                                                                  </h4>
-                                                                  <p className="text-xs text-[#6b6b7b]">
-                                                                    {el.description || t("dashboard.openFolder")}
-                                                                  </p>
-                                                                </div>
-                                                              </div>
-                                                              {canManageCourses && (
-                                                                <div className="flex items-center gap-1">
-                                                                  <button
-                                                                    onClick={(e) => {
-                                                                      e.stopPropagation();
-                                                                      setEditingElement({ id: el.id, name: el.name, color: el.color || "#b24760" });
-                                                                    }}
-                                                                    className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                    title={t("common.edit")}
-                                                                  >
-                                                                    <Pencil className="w-4 h-4" />
-                                                                  </button>
-                                                                  <button
-                                                                    onClick={(e) => {
-                                                                      e.stopPropagation();
-                                                                      setDeleteModal({
-                                                                        type: "element",
-                                                                        id: el.id,
-                                                                        title: el.name,
-                                                                      });
-                                                                    }}
-                                                                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                  >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                  </button>
-                                                                </div>
-                                                              )}
-                                                            </div>
-                                                          </div>
-                                                        ))}
-                                                      </div>
-                                                    ) : (
-                                                      <p className="text-sm text-[#6b6b7b] text-center py-4">
-                                                        {t("dashboard.noModules")}
-                                                      </p>
-                                                    )}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ))
-                                          ) : (
-                                            <p className="text-sm text-[#6b6b7b] text-center py-4">
-                                              {t("dashboard.noModulesInSemester", { defaultValue: "No modules yet." })}
-                                            </p>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <div className="glass-strong p-12 text-center mb-10">
-                                <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                                <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
-                                <p className="text-sm text-[#6b6b7b]/60">
-                                  {t("dashboard.noModulesDesc")}
-                                </p>
-                              </div>
-                            )
-                          ) : (
-                            <div className="glass-strong p-12 text-center mb-10">
-                              <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
-                              <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
-                              <p className="text-sm text-[#6b6b7b]/60">
-                                {t("dashboard.selectYearDesc")}
-                              </p>
-                            </div>
-                          )}
-                        </>
+                        <div className="glass-strong p-12 text-center">
+                          <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                          <p className="text-[#6b6b7b]">
+                            {t("dashboard.noDocsYet", { type: t(`types.${activeDocType}`).toLowerCase() })}
+                          </p>
+                        </div>
                       )}
                     </>
                   )}
+                </div>
+              ) : (
+                <>
+                  {/* Modules List */}
+                  {selectedYear ? (
+                    modulesList && modulesList.length > 0 ? (
+                      <div className="space-y-4 mb-10">
+                        {[1, 2].map((sem) => {
+                          const semModules = modulesList.filter(m => m.semester === sem);
+                          const yearName = years?.find(y => y.id === selectedYear)?.name || "";
+                          if (yearName === "5A" && sem === 2) return null;
+                          const isSemesterExpanded = expandedSemesters.has(sem);
 
-              {/* Activity Tab */}
-              {activeTab === "activity" && (
-                <div className="space-y-3">
-                  {activityLogs?.map((log) => (
-                    <div
-                      key={log.id}
-                      className="glass-strong p-4 flex items-start gap-4 border-l-4 border-l-[#b24760]"
+                          return (
+                            <div key={sem} className="glass-strong overflow-hidden">
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => toggleSemester(sem)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleSemester(sem);
+                                  }
+                                }}
+                                className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
+                                    <Folder className="w-6 h-6 text-white" />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold text-[#1a1a2e]">
+                                      {getSemesterName(yearName, sem)}
+                                    </h3>
+                                    <p className="text-sm text-[#6b6b7b]">
+                                      {semModules.length} {semModules.length === 1 ? t("common.module") : t("common.modules")}
+                                    </p>
+                                  </div>
+                                </div>
+                                <ChevronDown
+                                  className={`w-5 h-5 text-[#6b6b7b] transition-transform ${isSemesterExpanded ? "rotate-180" : ""
+                                    }`}
+                                />
+                              </div>
+
+                              {isSemesterExpanded && (
+                                <div className="border-t border-[#f5d0d8] p-5 space-y-4 animate-fadeInUp">
+                                  {semModules.length > 0 ? (
+                                    semModules.map((mod) => (
+                                      <div key={mod.id} className="glass-strong overflow-hidden">
+                                        <div
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={() => toggleModule(mod.id)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                              e.preventDefault();
+                                              toggleModule(mod.id);
+                                            }
+                                          }}
+                                          className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div
+                                              className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                              style={{
+                                                backgroundColor: mod.color || "#b24760"
+                                              }}
+                                            >
+                                              <Folder className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div>
+                                              <h3 className="font-semibold text-[#1a1a2e]">
+                                                {mod.name}
+                                              </h3>
+                                              <p className="text-sm text-[#6b6b7b]">
+                                                {mod.description || t("dashboard.openFolder")}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                                              {moduleElements && expandedModule === mod.id
+                                                ? t("dashboard.elementsCount", { count: moduleElements.length })
+                                                : t("dashboard.openFolder")}
+                                            </span>
+                                            <ChevronDown
+                                              className={`w-5 h-5 text-[#6b6b7b] transition-transform ${expandedModule === mod.id ? "rotate-180" : ""
+                                                }`}
+                                            />
+                                            {canManageCourses && (
+                                              <div className="flex items-center gap-1">
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingModule({ id: mod.id, name: mod.name, color: mod.color || "#b24760" });
+                                                  }}
+                                                  className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                  title={t("common.edit")}
+                                                >
+                                                  <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteModal({
+                                                      type: "module",
+                                                      id: mod.id,
+                                                      title: mod.name,
+                                                    });
+                                                  }}
+                                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                  <Trash2 className="w-4 h-4" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {expandedModule === mod.id && moduleElements && (
+                                          <div className="border-t border-[#f5d0d8] p-5 animate-fadeInUp">
+                                            {moduleElements.length > 0 ? (
+                                              <div className="grid sm:grid-cols-2 gap-3">
+                                                {moduleElements.map((el) => (
+                                                  <div
+                                                    key={el.id}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => setSelectedElement(el.id)}
+                                                    className="p-4 rounded-xl border border-[#f5d0d8] hover:border-[#b24760] hover:bg-[#fdf2f4] transition-all text-left cursor-pointer"
+                                                  >
+                                                    <div className="flex items-center justify-between gap-3">
+                                                      <div className="flex items-center gap-3">
+                                                        <div
+                                                          className="w-9 h-9 rounded-lg flex items-center justify-center"
+                                                          style={{
+                                                            backgroundColor: (el.color || "#b24760") + "20",
+                                                          }}
+                                                        >
+                                                          <Folder
+                                                            className="w-4 h-4"
+                                                            style={{ color: el.color || "#b24760" }}
+                                                          />
+                                                        </div>
+                                                        <div>
+                                                          <h4 className="font-medium text-[#1a1a2e] mb-0.5">
+                                                            {el.name}
+                                                          </h4>
+                                                          <p className="text-xs text-[#6b6b7b]">
+                                                            {el.description || t("dashboard.openFolder")}
+                                                          </p>
+                                                        </div>
+                                                      </div>
+                                                      {canManageCourses && (
+                                                        <div className="flex items-center gap-1">
+                                                          <button
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setEditingElement({ id: el.id, name: el.name, color: el.color || "#b24760" });
+                                                            }}
+                                                            className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title={t("common.edit")}
+                                                          >
+                                                            <Pencil className="w-4 h-4" />
+                                                          </button>
+                                                          <button
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setDeleteModal({
+                                                                type: "element",
+                                                                id: el.id,
+                                                                title: el.name,
+                                                              });
+                                                            }}
+                                                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                          >
+                                                            <Trash2 className="w-4 h-4" />
+                                                          </button>
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                                {t("dashboard.noModules")}
+                                              </p>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-[#6b6b7b] text-center py-4">
+                                      {t("dashboard.noModulesInSemester", { defaultValue: "No modules yet." })}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="glass-strong p-12 text-center mb-10">
+                        <FolderOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                        <p className="text-[#6b6b7b] mb-1">{t("dashboard.noModules")}</p>
+                        <p className="text-sm text-[#6b6b7b]/60">
+                          {t("dashboard.noModulesDesc")}
+                        </p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="glass-strong p-12 text-center mb-10">
+                      <BookOpen className="w-12 h-12 text-[#f5d0d8] mx-auto mb-3" />
+                      <p className="text-[#6b6b7b] mb-1">{t("dashboard.selectYearPrompt")}</p>
+                      <p className="text-sm text-[#6b6b7b]/60">
+                        {t("dashboard.selectYearDesc")}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {/* Activity Tab */}
+          {activeTab === "activity" && (
+            <div className="space-y-3">
+              {activityLogs?.map((log) => (
+                <div
+                  key={log.id}
+                  className="glass-strong p-4 flex items-start gap-4 border-l-4 border-l-[#b24760]"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0 mt-0.5">
+                    {log.action === "upload" && <UploadCloud className="w-4 h-4 text-green-600" />}
+                    {log.action === "edit" && <Pencil className="w-4 h-4 text-blue-600" />}
+                    {log.action === "delete" && <Trash2 className="w-4 h-4 text-red-600" />}
+                    {log.action === "grant_access" && <Shield className="w-4 h-4 text-[#b24760]" />}
+                    {log.action === "revoke_access" && <Shield className="w-4 h-4 text-orange-600" />}
+                    {!["upload", "edit", "delete", "grant_access", "revoke_access"].includes(log.action) && (
+                      <Activity className="w-4 h-4 text-[#b24760]" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-[#1a1a2e]">{log.description}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-[#6b6b7b]">{log.performerName}</span>
+                      <span className="text-xs text-[#6b6b7b]/60">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {activityLogs?.length === 0 && (
+                <div className="glass-strong p-8 text-center text-[#6b6b7b]">
+                  {t("admin.noActivity")}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === "settings" && (
+            <div className="animate-fadeInUp">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-[#1a1a2e]">{t("common.settings")}</h2>
+                {!isEditingSettings ? (
+                  <button
+                    onClick={startEditing}
+                    className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    {t("common.edit")}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsEditingSettings(false)}
+                      className="text-sm text-[#6b6b7b] hover:underline"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0 mt-0.5">
-                        {log.action === "upload" && <UploadCloud className="w-4 h-4 text-green-600" />}
-                        {log.action === "edit" && <Pencil className="w-4 h-4 text-blue-600" />}
-                        {log.action === "delete" && <Trash2 className="w-4 h-4 text-red-600" />}
-                        {log.action === "grant_access" && <Shield className="w-4 h-4 text-[#b24760]" />}
-                        {log.action === "revoke_access" && <Shield className="w-4 h-4 text-orange-600" />}
-                        {!["upload", "edit", "delete", "grant_access", "revoke_access"].includes(log.action) && (
-                          <Activity className="w-4 h-4 text-[#b24760]" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-[#1a1a2e]">{log.description}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-[#6b6b7b]">{log.performerName}</span>
-                          <span className="text-xs text-[#6b6b7b]/60">
-                            {new Date(log.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {activityLogs?.length === 0 && (
-                    <div className="glass-strong p-8 text-center text-[#6b6b7b]">
-                      {t("admin.noActivity")}
-                    </div>
-                  )}
+                      {t("common.cancel")}
+                    </button>
+                    <button
+                      onClick={handleUpdateProfile}
+                      disabled={updateProfileMutation.isLoading}
+                      className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
+                    >
+                      <Check className="w-4 h-4" />
+                      {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {settingsError && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                  {settingsError}
                 </div>
               )}
 
-              {/* Settings Tab */}
-              {activeTab === "settings" && (
-                <div className="animate-fadeInUp">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-[#1a1a2e]">{t("common.settings")}</h2>
-                    {!isEditingSettings ? (
-                      <button
-                        onClick={startEditing}
-                        className="flex items-center gap-2 text-sm text-[#b24760] hover:underline"
-                      >
-                        <Pencil className="w-4 h-4" />
-                        {t("common.edit")}
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setIsEditingSettings(false)}
-                          className="text-sm text-[#6b6b7b] hover:underline"
-                        >
-                          {t("common.cancel")}
-                        </button>
-                        <button
-                          onClick={handleUpdateProfile}
-                          disabled={updateProfileMutation.isLoading}
-                          className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
-                        >
-                          <Check className="w-4 h-4" />
-                          {updateProfileMutation.isLoading ? t("common.loading") : t("common.save")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {settingsError && (
-                    <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
-                      {settingsError}
+              <div className="glass-strong p-8">
+                {!isEditingSettings ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.fullName")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user?.name || "-"}</p>
                     </div>
-                  )}
-
-                  <div className="glass-strong p-8">
-                    {!isEditingSettings ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.fullName")}</p>
-                          <p className="text-base font-medium text-[#1a1a2e]">{user?.name || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.email")}</p>
-                          <p className="text-base font-medium text-[#1a1a2e]">{user?.email || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.ensamCode")}</p>
-                          <p className="text-base font-medium text-[#1a1a2e]">{user?.ensamCode || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("dashboard.academicTrack")}</p>
-                          <p className="text-base font-medium text-[#1a1a2e]">
-                            {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
-                            {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#1a1a2e]">{t("common.fullName")}</label>
-                          <input
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="w-full px-4 py-3 glass-input text-sm"
-                            placeholder={t("common.fullName")}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
-                          <input
-                            type="email"
-                            value={editEmail}
-                            onChange={(e) => setEditEmail(e.target.value)}
-                            className="w-full px-4 py-3 glass-input text-sm"
-                            placeholder={t("common.email")}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#6b6b7b]">{t("common.ensamCode")}</label>
-                          <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
-                            {user?.ensamCode}
-                          </div>
-                          <p className="text-[10px] text-[#6b6b7b] italic">{t("settings.cannotChangeCode")}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
-                          <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
-                            {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
-                            {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
-                          </div>
-                          <p className="text-[10px] text-[#6b6b7b] italic">
-                            {isAdmin ? t("settings.adminCannotChangeYear") : t("settings.repCannotChangeYear")}
-                          </p>
-                        </div>
-                      </form>
-                    )}
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.email")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user?.email || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("common.ensamCode")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">{user?.ensamCode || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#6b6b7b] uppercase tracking-wider mb-1">{t("dashboard.academicTrack")}</p>
+                      <p className="text-base font-medium text-[#1a1a2e]">
+                        {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
+                        {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.fullName")}</label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full px-4 py-3 glass-input text-sm"
+                        placeholder={t("common.fullName")}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
+                      <input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        className="w-full px-4 py-3 glass-input text-sm"
+                        placeholder={t("common.email")}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#6b6b7b]">{t("common.ensamCode")}</label>
+                      <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                        {user?.ensamCode}
+                      </div>
+                      <p className="text-[10px] text-[#6b6b7b] italic">{t("settings.cannotChangeCode")}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-[#6b6b7b]">{t("dashboard.academicTrack")}</label>
+                      <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
+                        {years?.find(y => y.id === user?.yearId)?.name || "N/A"}
+                        {user?.sectorId && sectors ? ` • ${sectors.find(s => s.id === user.sectorId)?.name}` : ""}
+                      </div>
+                      <p className="text-[10px] text-[#6b6b7b] italic">
+                        {isAdmin ? t("settings.adminCannotChangeYear") : t("settings.repCannotChangeYear")}
+                      </p>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -1448,30 +1444,30 @@ export default function AdminDashboard() {
                     {t("admin.noStudentFound")}
                   </p>
                 )}
-              {grantCandidate && (
-                <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
-                  <p className="font-medium">
-                    {t("admin.found")}: {grantCandidate.name} ({grantCandidate.ensamCode})
-                  </p>
-                  <p className="mt-1">
-                    {t("common.year")}: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
-                    {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
-                  </p>
-                </div>
-              )}
-              {grantCandidate && isAdmin && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("admin.selectRole")}</label>
-                  <select
-                    value={grantRole}
-                    onChange={(e) => setGrantRole(e.target.value as any)}
-                    className="w-full px-4 py-2.5 glass-input text-sm"
-                  >
-                    <option value="representative">{t("admin.representative")}</option>
-                    <option value="promo_representative">{t("admin.promoRepresentative")}</option>
-                  </select>
-                </div>
-              )}
+                {grantCandidate && (
+                  <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
+                    <p className="font-medium">
+                      {t("admin.found")}: {grantCandidate.name} ({grantCandidate.ensamCode})
+                    </p>
+                    <p className="mt-1">
+                      {t("common.year")}: {years?.find((y) => y.id === grantCandidate.yearId)?.name || "N/A"}
+                      {grantCandidate.sectorId ? ` • Sector ID ${grantCandidate.sectorId}` : ""}
+                    </p>
+                  </div>
+                )}
+                {grantCandidate && isAdmin && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("admin.selectRole")}</label>
+                    <select
+                      value={grantRole}
+                      onChange={(e) => setGrantRole(e.target.value as any)}
+                      className="w-full px-4 py-2.5 glass-input text-sm"
+                    >
+                      <option value="representative">{t("admin.representative")}</option>
+                      <option value="promo_representative">{t("admin.promoRepresentative")}</option>
+                    </select>
+                  </div>
+                )}
               </div>
               {grantError && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
@@ -1507,126 +1503,125 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (moduleName && moduleYear) {
-                  createModuleMutation.mutate({
-                    name: moduleName,
-                    yearId: Number(moduleYear),
-                    semester: moduleSemester,
-                    sectorId: moduleSector ? Number(moduleSector) : undefined,
-                    sectorIds: moduleSectorsList.length > 0 ? moduleSectorsList : undefined,
-                    color: moduleColor,
-                  });
-                }
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
-                <input
-                  type="text"
-                  value={moduleName}
-                  onChange={(e) => setModuleName(e.target.value)}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.year")}</label>
-                <select
-                  value={moduleYear}
-                  onChange={(e) => {
-                    setModuleYear(e.target.value ? Number(e.target.value) : "");
-                    setModuleSector("");
-                    setModuleSectorsList([]);
-                  }}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  required
-                  disabled={isPromoRepresentative}
-                >
-                  <option value="">{t("common.selectYear")}</option>
-                  {years?.map((y) => (
-                    <option key={y.id} value={y.id}>{y.name}</option>
-                  ))}
-                </select>
-              </div>
-              {moduleYear && (
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (moduleName && moduleYear) {
+                    createModuleMutation.mutate({
+                      name: moduleName,
+                      yearId: Number(moduleYear),
+                      semester: moduleSemester,
+                      sectorId: moduleSector ? Number(moduleSector) : undefined,
+                      sectorIds: moduleSectorsList.length > 0 ? moduleSectorsList : undefined,
+                      color: moduleColor,
+                    });
+                  }
+                }}
+                className="space-y-4"
+              >
                 <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.semester", { defaultValue: "Semester" })}</label>
-                  <select
-                    value={moduleSemester}
-                    onChange={(e) => setModuleSemester(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 glass-input text-sm mb-4"
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
+                  <input
+                    type="text"
+                    value={moduleName}
+                    onChange={(e) => setModuleName(e.target.value)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.year")}</label>
+                  <select
+                    value={moduleYear}
+                    onChange={(e) => {
+                      setModuleYear(e.target.value ? Number(e.target.value) : "");
+                      setModuleSector("");
+                      setModuleSectorsList([]);
+                    }}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                    disabled={isPromoRepresentative}
                   >
-                    <option value={1}>{getSemesterName(years?.find(y => y.id === moduleYear)?.name || "", 1)}</option>
-                    {years?.find(y => y.id === moduleYear)?.name !== "5A" && (
-                      <option value={2}>{getSemesterName(years?.find(y => y.id === moduleYear)?.name || "", 2)}</option>
-                    )}
+                    <option value="">{t("common.selectYear")}</option>
+                    {years?.map((y) => (
+                      <option key={y.id} value={y.id}>{y.name}</option>
+                    ))}
                   </select>
                 </div>
-              )}
-              {years?.find((y) => y.id === moduleYear)?.hasSectors && sectors && (
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
-                    {t("common.sectors")} ({t("common.optional")})
-                  </label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto p-3 glass-input rounded-xl">
-                    {sectors.map((s) => (
-                      <label key={s.id} className="flex items-center gap-3 cursor-pointer hover:bg-[#fdf2f4]/50 p-1.5 rounded-lg transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={moduleSectorsList.includes(s.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setModuleSectorsList([...moduleSectorsList, s.id]);
-                            } else {
-                              setModuleSectorsList(moduleSectorsList.filter(id => id !== s.id));
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-[#f5d0d8] text-[#b24760] focus:ring-[#b24760]"
-                        />
-                        <span className="text-sm text-[#6b6b7b]">{s.name}</span>
-                      </label>
-                    ))}
+                {moduleYear && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.semester", { defaultValue: "Semester" })}</label>
+                    <select
+                      value={moduleSemester}
+                      onChange={(e) => setModuleSemester(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 glass-input text-sm mb-4"
+                      required
+                    >
+                      <option value={1}>{getSemesterName(years?.find(y => y.id === moduleYear)?.name || "", 1)}</option>
+                      {years?.find(y => y.id === moduleYear)?.name !== "5A" && (
+                        <option value={2}>{getSemesterName(years?.find(y => y.id === moduleYear)?.name || "", 2)}</option>
+                      )}
+                    </select>
                   </div>
-                  <p className="text-[10px] text-[#6b6b7b] mt-2 italic">
-                    {t("admin.multiSectorNotice")}
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
-                <div className="grid grid-cols-10 gap-2">
-                  {FOLDER_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setModuleColor(color)}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        moduleColor === color
+                )}
+                {years?.find((y) => y.id === moduleYear)?.hasSectors && sectors && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                      {t("common.sectors")} ({t("common.optional")})
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto p-3 glass-input rounded-xl">
+                      {sectors.map((s) => (
+                        <label key={s.id} className="flex items-center gap-3 cursor-pointer hover:bg-[#fdf2f4]/50 p-1.5 rounded-lg transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={moduleSectorsList.includes(s.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setModuleSectorsList([...moduleSectorsList, s.id]);
+                              } else {
+                                setModuleSectorsList(moduleSectorsList.filter(id => id !== s.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-[#f5d0d8] text-[#b24760] focus:ring-[#b24760]"
+                          />
+                          <span className="text-sm text-[#6b6b7b]">{s.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[#6b6b7b] mt-2 italic">
+                      {t("admin.multiSectorNotice")}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                  <div className="grid grid-cols-10 gap-2">
+                    {FOLDER_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setModuleColor(color)}
+                        className={`w-8 h-8 rounded-full transition-all ${moduleColor === color
                           ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
                           : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                          }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModuleModal(false)}
-                  className="flex-1 btn-glass"
-                >
-                  {t("common.cancel")}
-                </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {t("common.create")}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModuleModal(false)}
+                    className="flex-1 btn-glass"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button type="submit" className="flex-1 btn-primary">
+                    {t("common.create")}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1644,73 +1639,72 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (elementName && elementModule) {
-                  createElementMutation.mutate({
-                    name: elementName,
-                    moduleId: Number(elementModule),
-                    color: elementColor,
-                  });
-                }
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
-                <input
-                  type="text"
-                  value={elementName}
-                  onChange={(e) => setElementName(e.target.value)}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.module")}</label>
-                <select
-                  value={elementModule}
-                  onChange={(e) => setElementModule(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  required
-                >
-                  <option value="">{t("dashboard.selectModule")}</option>
-                  {modulesList?.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
-                <div className="grid grid-cols-10 gap-2">
-                  {FOLDER_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setElementColor(color)}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        elementColor === color
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (elementName && elementModule) {
+                    createElementMutation.mutate({
+                      name: elementName,
+                      moduleId: Number(elementModule),
+                      color: elementColor,
+                    });
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.name")}</label>
+                  <input
+                    type="text"
+                    value={elementName}
+                    onChange={(e) => setElementName(e.target.value)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.module")}</label>
+                  <select
+                    value={elementModule}
+                    onChange={(e) => setElementModule(e.target.value ? Number(e.target.value) : "")}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  >
+                    <option value="">{t("dashboard.selectModule")}</option>
+                    {modulesList?.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-3">Color</label>
+                  <div className="grid grid-cols-10 gap-2">
+                    {FOLDER_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setElementColor(color)}
+                        className={`w-8 h-8 rounded-full transition-all ${elementColor === color
                           ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
                           : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                          }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowElementModal(false)}
-                  className="flex-1 btn-glass"
-                >
-                  {t("common.cancel")}
-                </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {t("common.create")}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowElementModal(false)}
+                    className="flex-1 btn-glass"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button type="submit" className="flex-1 btn-primary">
+                    {t("common.create")}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1750,8 +1744,8 @@ export default function AdminDashboard() {
               {deleteModal.type === "module"
                 ? t("delete.moduleConfirm")
                 : deleteModal.type === "element"
-                ? t("delete.elementConfirm")
-                : t("delete.documentConfirm")}
+                  ? t("delete.elementConfirm")
+                  : t("delete.documentConfirm")}
             </p>
             <div className="flex gap-3">
               <button
@@ -1778,8 +1772,8 @@ export default function AdminDashboard() {
                 className="flex-1 px-6 py-3 rounded-full font-medium text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
               >
                 {deleteModuleMutation.isLoading ||
-                deleteElementMutation.isLoading ||
-                deleteDocMutation.isLoading
+                  deleteElementMutation.isLoading ||
+                  deleteDocMutation.isLoading
                   ? t("common.loading")
                   : t("common.delete")}
               </button>
@@ -1789,9 +1783,9 @@ export default function AdminDashboard() {
       )}
       {showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md animate-fadeInUp">
+          <div className="glass-strong p-8 w-full max-w-md min-h-[535px] animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveUrl")}</h3>
+              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveYoutubeUrl")}</h3>
               <button onClick={() => setShowLinkModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
                 <X className="w-5 h-5 text-[#6b6b7b]" />
               </button>
@@ -1809,7 +1803,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive URL</label>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive Youtube URL</label>
                 <input
                   type="url"
                   value={linkUrl}
@@ -1913,11 +1907,10 @@ export default function AdminDashboard() {
                         key={color}
                         type="button"
                         onClick={() => setEditingModule({ ...editingModule, color })}
-                        className={`w-8 h-8 rounded-full transition-all ${
-                          editingModule.color === color
-                            ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
-                            : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
-                        }`}
+                        className={`w-8 h-8 rounded-full transition-all ${editingModule.color === color
+                          ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                          : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
@@ -1980,11 +1973,10 @@ export default function AdminDashboard() {
                         key={color}
                         type="button"
                         onClick={() => setEditingElement({ ...editingElement, color })}
-                        className={`w-8 h-8 rounded-full transition-all ${
-                          editingElement.color === color
-                            ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
-                            : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
-                        }`}
+                        className={`w-8 h-8 rounded-full transition-all ${editingElement.color === color
+                          ? "ring-2 ring-offset-2 ring-[#1a1a2e]"
+                          : "hover:ring-2 hover:ring-offset-2 hover:ring-[#6b6b7b]"
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}

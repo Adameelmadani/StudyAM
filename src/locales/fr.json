@@ -93,7 +93,7 @@
     "academicYear": "Année Académique",
     "docsAvailable": "{{count}} document(s) disponible(s)",
     "selectFolderDesc": "Sélectionnez un dossier pour voir les documents.",
-    "addDriveUrl": "Ajouter un lien Google Drive",
+    "addDriveYoutubeUrl": "Ajouter un lien Google Drive ou Youtube",
     "by": "par",
     "noDocsYet": "Aucun document de type {{type}} pour le moment",
     "addModule": "Ajouter un Module",

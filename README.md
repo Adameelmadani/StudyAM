@@ -1,6 +1,6 @@
 # StudyAM - ENSAM Course Management Platform
 
-StudyAM is a full-stack course management platform built for ENSAM (Ecole Nationale Superieure d'Arts et Metiers). It organizes courses across 5 academic years (1A-5A) with sector specializations for years 3A-5A, featuring three account types (Student, Representative, Admin) and Google Drive URL-based document storage.
+StudyAM is a full-stack course management platform built for ENSAM (Ecole Nationale Superieure d'Arts et Metiers). It organizes courses across 5 academic years (1A-5A) with sector specializations for years 3A-5A, featuring three account types (Student, Representative, Admin) and Google Drive Youtube URL-based document storage.
 
 ## Features
 
@@ -8,7 +8,7 @@ StudyAM is a full-stack course management platform built for ENSAM (Ecole Nation
 - **5 Academic Years**: 1A, 2A, 3A, 4A, 5A with sector selection for 3A+
 - **6 Sectors**: Mecanique, Electrotechnique, Informatique, Genie des Procedes, Genie Civil, Industriel
 - **Course Organization**: Modules > Elements > Documents (Cours, Exam, Test, TP, Resume)
-- **Document Storage**: Google Drive URLs (no file storage needed)
+- **Document Storage**: Google Drive Youtube URLs (no file storage needed)
 - **Glassmorphism Design**: White and #b24760 rose color palette
 - **Full-Stack**: React + TypeScript frontend, tRPC + Drizzle ORM + MySQL backend
 
@@ -161,7 +161,7 @@ The application uses the following tables:
 | `yearSectors` | Junction table for year-sector mappings |
 | `modules` | Course modules (e.g., Mathematics) |
 | `elements` | Module elements (e.g., Math 1, Math 2) |
-| `documents` | Google Drive URLs with type (cours, exam, test, tp, resume) |
+| `documents` | Google Drive Youtube URLs with type (cours, exam, test, tp, resume) |
 | `activityLog` | Audit trail for admin monitoring |
 
 ## API Endpoints (tRPC)
@@ -188,7 +188,7 @@ The application uses the following tables:
 - Granted by admins from student accounts
 - Requires admin approval to upload documents
 - Can only upload documents for their assigned year and sector
-- Can upload Google Drive URLs with document type selection
+- Can upload Google Drive Youtube URLs with document type selection
 
 ### Admin
 - Full platform management access
