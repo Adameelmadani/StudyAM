@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Trash2 } from "lucide-react";
 import { extractGoogleDriveFileId, getDriveThumbnail } from "@/lib/fileTypeDetection";
 
 export interface ThumbnailCardProps {
@@ -11,6 +11,8 @@ export interface ThumbnailCardProps {
   typeColors?: Record<string, string>;
   typeLabel?: string;
   onClick?: () => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }
 
 export function ThumbnailCard({
@@ -22,6 +24,8 @@ export function ThumbnailCard({
   typeColors = {},
   typeLabel,
   onClick,
+  onDelete,
+  canDelete = false,
 }: ThumbnailCardProps) {
   const [previewError, setPreviewError] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(true);
@@ -34,7 +38,7 @@ export function ThumbnailCard({
 
   return (
     <div
-      className="glass-strong overflow-hidden glass-hover transition-all cursor-pointer"
+      className="glass-strong overflow-hidden glass-hover transition-all cursor-pointer group relative"
       onClick={onClick}
     >
       {/* Thumbnail Preview */}
@@ -72,18 +76,32 @@ export function ThumbnailCard({
             </span>
           </div>
         )}
+
+        {/* Delete Button - appears on hover */}
+        {canDelete && onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Card Content */}
-      <div className="p-4">
+      <div className="p-3">
         <span
-          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${
+          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-1.5 ${
             typeColors[type] || "bg-gray-100 text-gray-700"
           }`}
         >
           {typeLabel || type}
         </span>
-        <h4 className="font-medium text-[#1a1a2e] truncate mb-1 line-clamp-2">
+        <h4 className="font-medium text-[#1a1a2e] truncate mb-0.5 line-clamp-2 text-sm">
           {title}
         </h4>
         <p className="text-xs text-[#6b6b7b]">

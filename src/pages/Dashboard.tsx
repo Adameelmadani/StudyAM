@@ -23,7 +23,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS, DOC_TYPE_BG_COLORS } from "@/const";
-import { detectFileTypeFromUrl } from "@/lib/fileTypeDetection";
+import { detectFileTypeFromUrl, extractGoogleDriveFileId } from "@/lib/fileTypeDetection";
 import { DocumentCard } from "@/components/DocumentCard";
 import { ThumbnailCard } from "@/components/ThumbnailCard";
 
@@ -76,6 +76,7 @@ export default function Dashboard() {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showElementModal, setShowElementModal] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ url: string; title: string } | null>(null);
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
@@ -649,18 +650,41 @@ export default function Dashboard() {
                   </div>
 
                   {activeDocs && activeDocs.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {activeDocs.map((doc) => (
-                        <DocumentCard
+                        <ThumbnailCard
                           key={doc.id}
                           id={doc.id}
                           title={doc.title}
                           type={doc.type}
                           url={doc.url}
-                          uploaderName={doc.uploaderName}
                           createdAt={doc.createdAt}
                           typeColors={typeColors}
                           typeLabel={t(`types.${doc.type}`)}
+                          onClick={() => {
+                            const fileId = extractGoogleDriveFileId(doc.url);
+                            if (fileId) {
+                              setPreviewFile({
+                                url: `https://drive.google.com/file/d/${fileId}/preview`,
+                                title: doc.title,
+                              });
+                            } else if (doc.url.includes("/folders/")) {
+                              const folderIdMatch = doc.url.match(/folders\/([a-zA-Z0-9-_]+)/);
+                              if (folderIdMatch) {
+                                setPreviewFile({
+                                  url: `https://drive.google.com/embeddedfolderview?id=${folderIdMatch[1]}#grid`,
+                                  title: doc.title,
+                                });
+                              } else {
+                                window.open(doc.url, "_blank");
+                              }
+                            } else {
+                              setPreviewFile({
+                                url: doc.url,
+                                title: doc.title,
+                              });
+                            }
+                          }}
                           onDelete={() =>
                             setDeleteModal({
                               type: "document",
@@ -669,7 +693,6 @@ export default function Dashboard() {
                             })
                           }
                           canDelete={canManageDocs}
-                          showPreview={true}
                         />
                       ))}
                     </div>
@@ -954,8 +977,28 @@ export default function Dashboard() {
                         typeColors={typeColors}
                         typeLabel={t(`types.${doc.type}`)}
                         onClick={() => {
-                          setSelectedElement(doc.elementId);
-                          setActiveDocType(doc.type as DocType);
+                          const fileId = extractGoogleDriveFileId(doc.url);
+                          if (fileId) {
+                            setPreviewFile({
+                              url: `https://drive.google.com/file/d/${fileId}/preview`,
+                              title: doc.title,
+                            });
+                          } else if (doc.url.includes("/folders/")) {
+                            const folderIdMatch = doc.url.match(/folders\/([a-zA-Z0-9-_]+)/);
+                            if (folderIdMatch) {
+                              setPreviewFile({
+                                url: `https://drive.google.com/embeddedfolderview?id=${folderIdMatch[1]}#grid`,
+                                title: doc.title,
+                              });
+                            } else {
+                              window.open(doc.url, "_blank");
+                            }
+                          } else {
+                            setPreviewFile({
+                              url: doc.url,
+                              title: doc.title,
+                            });
+                          }
                         }}
                       />
                     ))}
@@ -1586,6 +1629,35 @@ export default function Dashboard() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg w-full h-[90vh] max-w-6xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-[#1a1a2e] truncate pr-4">
+                {previewFile.title}
+              </h3>
+              <button
+                onClick={() => setPreviewFile(null)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              >
+                <X className="w-5 h-5 text-[#6b6b7b]" />
+              </button>
+            </div>
+
+            {/* Preview */}
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={previewFile.url}
+                title={previewFile.title}
+                className="w-full h-full border-0"
+                allow="fullscreen"
+              />
             </div>
           </div>
         </div>
