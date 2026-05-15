@@ -56,6 +56,7 @@ export function ThumbnailCard({
               src={thumbnail}
               alt={title}
               className="w-full h-full object-cover"
+              loading="lazy"
               onLoad={() => setPreviewLoading(false)}
               onError={() => {
                 setPreviewError(true);

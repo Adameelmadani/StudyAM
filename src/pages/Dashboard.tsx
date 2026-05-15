@@ -1657,6 +1657,7 @@ export default function Dashboard() {
                 title={previewFile.title}
                 className="w-full h-full border-0"
                 allow="fullscreen"
+                loading="lazy"
               />
             </div>
           </div>

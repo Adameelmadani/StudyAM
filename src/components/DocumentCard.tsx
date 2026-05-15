@@ -42,6 +42,7 @@ export function DocumentCard({
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover"
+            loading="lazy"
             onError={() => setShowThumbnail(false)}
           />
         </div>

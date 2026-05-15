@@ -2038,6 +2038,7 @@ export default function AdminDashboard() {
                 title={previewFile.title}
                 className="w-full h-full border-0"
                 allow="fullscreen"
+                loading="lazy"
               />
             </div>
           </div>

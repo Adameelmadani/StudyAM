@@ -79,6 +79,7 @@ export function FilePreview({ url, title, height = "400px" }: FilePreviewProps) 
         height={height}
         frameBorder="0"
         allow="autoplay"
+        loading="lazy"
         onError={() => setPreviewError(true)}
         className="bg-white"
         style={{
