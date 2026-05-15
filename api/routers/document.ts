@@ -131,7 +131,7 @@ export const documentRouter = createRouter({
       z.object({
         title: z.string().min(1, "Document title is required"),
         type: z.enum(["cours", "exam", "test", "tp", "resume"]),
-        fileType: z.enum(["spreadsheets", "presentation", "file"]),
+        fileType: z.enum(["spreadsheets", "presentation", "file", "video"]),
         url: z.string().url("Must be a valid URL"),
         elementId: z.number().int().positive(),
       })
@@ -200,7 +200,7 @@ export const documentRouter = createRouter({
         id: z.number().int().positive(),
         title: z.string().optional(),
         type: z.enum(["cours", "exam", "test", "tp", "resume"]).optional(),
-        fileType: z.enum(["spreadsheets", "presentation", "file"]).optional(),
+        fileType: z.enum(["spreadsheets", "presentation", "file", "video"]).optional(),
         url: z.string().url().optional(),
       })
     )

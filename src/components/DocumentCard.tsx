@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { FileText, ChevronDown, AlertCircle } from "lucide-react";
+import { FileText, ChevronDown, AlertCircle, Video, Presentation, Table } from "lucide-react";
 import { FilePreview } from "./FilePreview";
-import { getDriveThumbnail } from "@/lib/fileTypeDetection";
+import { getThumbnail } from "@/lib/fileTypeDetection";
 
 export interface DocumentCardProps {
   id: number;
@@ -15,6 +15,7 @@ export interface DocumentCardProps {
   onDelete?: () => void;
   canDelete?: boolean;
   showPreview?: boolean;
+  fileType?: string;
 }
 
 export function DocumentCard({
@@ -29,10 +30,11 @@ export function DocumentCard({
   onDelete,
   canDelete = false,
   showPreview = true,
+  fileType = "file",
 }: DocumentCardProps) {
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(showPreview);
-  const thumbnail = getDriveThumbnail(url);
+  const thumbnail = getThumbnail(url);
 
   return (
     <div className="glass-strong overflow-hidden">
@@ -49,7 +51,15 @@ export function DocumentCard({
       )}
       <div className="p-4 flex items-center gap-4 hover:shadow-lg transition-all">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center shrink-0">
-          <FileText className="w-5 h-5 text-[#b24760]" />
+          {fileType === "video" ? (
+            <Video className="w-5 h-5 text-[#b24760]" />
+          ) : fileType === "presentation" ? (
+            <Presentation className="w-5 h-5 text-[#b24760]" />
+          ) : fileType === "spreadsheets" ? (
+            <Table className="w-5 h-5 text-[#b24760]" />
+          ) : (
+            <FileText className="w-5 h-5 text-[#b24760]" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-[#1a1a2e] truncate">{title}</h4>

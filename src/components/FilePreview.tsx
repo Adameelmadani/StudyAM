@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertCircle, Copy, Check } from "lucide-react";
-import { extractGoogleDriveFileId } from "@/lib/fileTypeDetection";
+import { getEmbedUrl } from "@/lib/fileTypeDetection";
 
 interface FilePreviewProps {
   url: string;

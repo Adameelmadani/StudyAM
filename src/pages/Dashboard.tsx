@@ -19,11 +19,12 @@ import {
   Trash2,
   Pencil,
   Check,
+  Video,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS, DOC_TYPE_BG_COLORS } from "@/const";
-import { detectFileTypeFromUrl, extractGoogleDriveFileId } from "@/lib/fileTypeDetection";
+import { detectFileTypeFromUrl, getEmbedUrl } from "@/lib/fileTypeDetection";
 import { DocumentCard } from "@/components/DocumentCard";
 import { ThumbnailCard } from "@/components/ThumbnailCard";
 
@@ -80,7 +81,7 @@ export default function Dashboard() {
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
-  const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file">("file");
+  const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file" | "video">("file");
   const [detectedFileType, setDetectedFileType] = useState<string | null>(null);
   const [linkError, setLinkError] = useState("");
   const [moduleName, setModuleName] = useState("");
@@ -378,11 +379,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (linkUrl && isGoogleDriveUrl(linkUrl)) {
+    if (linkUrl) {
       const detected = detectFileTypeFromUrl(linkUrl);
       setDetectedFileType(detected);
-      if (detected) {
-        setLinkFileType(detected);
+      if (detected && (isGoogleDriveUrl(linkUrl) || detected === "video")) {
+        setLinkFileType(detected as any);
       }
     } else {
       setDetectedFileType(null);
@@ -659,30 +660,18 @@ export default function Dashboard() {
                           type={doc.type}
                           url={doc.url}
                           createdAt={doc.createdAt}
+                          fileType={doc.fileType}
                           typeColors={typeColors}
                           typeLabel={t(`types.${doc.type}`)}
                           onClick={() => {
-                            const fileId = extractGoogleDriveFileId(doc.url);
-                            if (fileId) {
+                            const embedUrl = getEmbedUrl(doc.url);
+                            if (embedUrl) {
                               setPreviewFile({
-                                url: `https://drive.google.com/file/d/${fileId}/preview`,
+                                url: embedUrl,
                                 title: doc.title,
                               });
-                            } else if (doc.url.includes("/folders/")) {
-                              const folderIdMatch = doc.url.match(/folders\/([a-zA-Z0-9-_]+)/);
-                              if (folderIdMatch) {
-                                setPreviewFile({
-                                  url: `https://drive.google.com/embeddedfolderview?id=${folderIdMatch[1]}#grid`,
-                                  title: doc.title,
-                                });
-                              } else {
-                                window.open(doc.url, "_blank");
-                              }
                             } else {
-                              setPreviewFile({
-                                url: doc.url,
-                                title: doc.title,
-                              });
+                              window.open(doc.url, "_blank");
                             }
                           }}
                           onDelete={() =>
@@ -974,30 +963,18 @@ export default function Dashboard() {
                         type={doc.type}
                         url={doc.url}
                         createdAt={doc.createdAt}
+                        fileType={doc.fileType}
                         typeColors={typeColors}
                         typeLabel={t(`types.${doc.type}`)}
                         onClick={() => {
-                          const fileId = extractGoogleDriveFileId(doc.url);
-                          if (fileId) {
+                          const embedUrl = getEmbedUrl(doc.url);
+                          if (embedUrl) {
                             setPreviewFile({
-                              url: `https://drive.google.com/file/d/${fileId}/preview`,
+                              url: embedUrl,
                               title: doc.title,
                             });
-                          } else if (doc.url.includes("/folders/")) {
-                            const folderIdMatch = doc.url.match(/folders\/([a-zA-Z0-9-_]+)/);
-                            if (folderIdMatch) {
-                              setPreviewFile({
-                                url: `https://drive.google.com/embeddedfolderview?id=${folderIdMatch[1]}#grid`,
-                                title: doc.title,
-                              });
-                            } else {
-                              window.open(doc.url, "_blank");
-                            }
                           } else {
-                            setPreviewFile({
-                              url: doc.url,
-                              title: doc.title,
-                            });
+                            window.open(doc.url, "_blank");
                           }
                         }}
                       />
@@ -1231,6 +1208,7 @@ export default function Dashboard() {
                   <option value="spreadsheets">Spreadsheets</option>
                   <option value="presentation">Presentation</option>
                   <option value="file">File (PDF, Image, etc.)</option>
+                  <option value="video">Video (YouTube, etc.)</option>
                 </select>
               </div>
               {linkError && (

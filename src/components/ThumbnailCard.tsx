@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { AlertCircle, Trash2 } from "lucide-react";
-import { extractGoogleDriveFileId, getDriveThumbnail } from "@/lib/fileTypeDetection";
+import { AlertCircle, Trash2, Video, Presentation, Table, FileText } from "lucide-react";
+import { extractGoogleDriveFileId, getThumbnail } from "@/lib/fileTypeDetection";
 
 export interface ThumbnailCardProps {
   id: number;
@@ -13,6 +13,7 @@ export interface ThumbnailCardProps {
   onClick?: () => void;
   onDelete?: () => void;
   canDelete?: boolean;
+  fileType?: string;
 }
 
 export function ThumbnailCard({
@@ -26,11 +27,12 @@ export function ThumbnailCard({
   onClick,
   onDelete,
   canDelete = false,
+  fileType = "file",
 }: ThumbnailCardProps) {
   const [previewError, setPreviewError] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(true);
   const fileId = extractGoogleDriveFileId(url);
-  const thumbnail = getDriveThumbnail(url);
+  const thumbnail = getThumbnail(url);
 
   const previewUrl = fileId
     ? `https://drive.google.com/file/d/${fileId}/preview`
@@ -69,7 +71,15 @@ export function ThumbnailCard({
           </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-            <AlertCircle className="w-8 h-8 mb-2" />
+            {fileType === "video" ? (
+              <Video className="w-8 h-8 mb-2" />
+            ) : fileType === "presentation" ? (
+              <Presentation className="w-8 h-8 mb-2" />
+            ) : fileType === "spreadsheets" ? (
+              <Table className="w-8 h-8 mb-2" />
+            ) : (
+              <FileText className="w-8 h-8 mb-2" />
+            )}
             <span className="text-xs text-center px-2">
               {previewError
                 ? "Preview not available"

@@ -1,4 +1,4 @@
-export type FileType = "spreadsheets" | "presentation" | "file";
+export type FileType = "spreadsheets" | "presentation" | "file" | "video" | "folder";
 
 const MIME_TYPE_MAP: Record<string, FileType> = {
   "application/vnd.ms-powerpoint": "presentation",
@@ -37,8 +37,21 @@ const EXTENSION_MAP: Record<string, FileType> = {
   svg: "file",
 };
 
+export function extractYoutubeVideoId(url: string): string | null {
+  try {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+    if (match) return match[1];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function detectFileTypeFromUrl(url: string): FileType | null {
   try {
+    if (extractYoutubeVideoId(url)) return "video";
+    if (url.includes("/folders/")) return "folder";
+
     const urlObj = new URL(url);
     const pathname = urlObj.pathname.toLowerCase();
 
@@ -92,9 +105,29 @@ export function extractGoogleDriveFileId(url: string): string | null {
   }
 }
 
-export function getDriveThumbnail(url: string): string | null {
+export function getThumbnail(url: string): string | null {
+  const youtubeId = extractYoutubeVideoId(url);
+  if (youtubeId) return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+
   const fileId = extractGoogleDriveFileId(url);
   return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : null;
+}
+
+export function getEmbedUrl(url: string): string | null {
+  const youtubeId = extractYoutubeVideoId(url);
+  if (youtubeId) return `https://www.youtube.com/embed/${youtubeId}`;
+
+  const driveId = extractGoogleDriveFileId(url);
+  if (driveId) return `https://drive.google.com/file/d/${driveId}/preview`;
+
+  if (url.includes("/folders/")) {
+    const folderIdMatch = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+    if (folderIdMatch) {
+      return `https://drive.google.com/embeddedfolderview?id=${folderIdMatch[1]}#grid`;
+    }
+  }
+
+  return null;
 }
 
 export type GoogleDriveItemType = "DOCUMENT" | "SHEET" | "SLIDE" | "GENERIC_FILE" | "UNKNOWN";
