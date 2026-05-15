@@ -106,6 +106,7 @@ export const documents = mysqlTable("documents", {
   title: varchar("title", { length: 200 }).notNull(),
   type: mysqlEnum("type", ["cours", "exam", "test", "tp", "resume"]).notNull(),
   url: varchar("url", { length: 500 }).notNull(),
+  fileType: mysqlEnum("fileType", ["spreadsheets", "presentation", "file"]).notNull(),
   elementId: bigint("elementId", { mode: "number", unsigned: true }).notNull(),
   uploadedBy: bigint("uploadedBy", { mode: "number", unsigned: true }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

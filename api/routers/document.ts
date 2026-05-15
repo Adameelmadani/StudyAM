@@ -9,6 +9,8 @@ import { documents, elements, modules, users, moduleSectors } from "@db/schema";
 import { eq, and, desc, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import type { Module, Element, Document } from "@db/schema";
+import { detectFileTypeFromUrl, validateFileType } from "../lib/fileTypeDetection";
+import type { FileType } from "../lib/fileTypeDetection";
 
 export const documentRouter = createRouter({
   list: publicQuery
@@ -129,6 +131,7 @@ export const documentRouter = createRouter({
       z.object({
         title: z.string().min(1, "Document title is required"),
         type: z.enum(["cours", "exam", "test", "tp", "resume"]),
+        fileType: z.enum(["spreadsheets", "presentation", "file"]),
         url: z.string().url("Must be a valid URL"),
         elementId: z.number().int().positive(),
       })
@@ -141,6 +144,15 @@ export const documentRouter = createRouter({
       });
       if (!element) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Element not found" });
+      }
+
+      // Validate file type
+      const detectedType = detectFileTypeFromUrl(input.url);
+      if (!validateFileType(detectedType, input.fileType)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `File type mismatch. Detected: ${detectedType}, Selected: ${input.fileType}`,
+        });
       }
 
       const isRepresentative = ctx.user.role === "representative";
@@ -172,6 +184,7 @@ export const documentRouter = createRouter({
       const result = await db.insert(documents).values({
         title: input.title,
         type: input.type,
+        fileType: input.fileType as FileType,
         url: input.url,
         elementId: input.elementId,
         uploadedBy: ctx.user.id,
@@ -187,6 +200,7 @@ export const documentRouter = createRouter({
         id: z.number().int().positive(),
         title: z.string().optional(),
         type: z.enum(["cours", "exam", "test", "tp", "resume"]).optional(),
+        fileType: z.enum(["spreadsheets", "presentation", "file"]).optional(),
         url: z.string().url().optional(),
       })
     )
@@ -197,6 +211,19 @@ export const documentRouter = createRouter({
       });
       if (!doc) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+      }
+
+      // Validate file type if URL or fileType is being updated
+      if (input.url || input.fileType) {
+        const urlToValidate = input.url || doc.url;
+        const fileTypeToValidate = input.fileType || doc.fileType;
+        const detectedType = detectFileTypeFromUrl(urlToValidate);
+        if (!validateFileType(detectedType, fileTypeToValidate as FileType)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `File type mismatch. Detected: ${detectedType}, Selected: ${fileTypeToValidate}`,
+          });
+        }
       }
 
       const isRepresentative = ctx.user.role === "representative";

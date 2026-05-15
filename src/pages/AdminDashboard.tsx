@@ -31,6 +31,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS } from "@/const";
+import { detectFileTypeFromUrl } from "@/lib/fileTypeDetection";
+import { DocumentCard } from "@/components/DocumentCard";
 
 type AdminTab = "dashboard" | "students" | "representatives" | "promo_reps" | "courses" | "activity" | "settings";
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
@@ -88,6 +90,8 @@ export default function AdminDashboard() {
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
+  const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file">("file");
+  const [detectedFileType, setDetectedFileType] = useState<string | null>(null);
   const [linkError, setLinkError] = useState("");
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState("");
@@ -218,6 +222,8 @@ export default function AdminDashboard() {
       setLinkTitle("");
       setLinkUrl("");
       setLinkError("");
+      setDetectedFileType(null);
+      setLinkFileType("file");
       if (selectedElement) {
         utils.document.list.invalidate({ elementId: selectedElement });
       }
@@ -235,6 +241,7 @@ export default function AdminDashboard() {
         title: linkTitle,
         url: linkUrl,
         type: linkType,
+        fileType: linkFileType,
         elementId: selectedElement,
       });
     } catch (err: unknown) {
@@ -242,6 +249,21 @@ export default function AdminDashboard() {
       setLinkError(error.message || "Failed to add link");
     }
   };
+
+  const isGoogleDriveUrl = (url: string) =>
+    /https?:\/\/(drive|docs)\.google\.com\//i.test(url);
+
+  useEffect(() => {
+    if (linkUrl && isGoogleDriveUrl(linkUrl)) {
+      const detected = detectFileTypeFromUrl(linkUrl);
+      setDetectedFileType(detected);
+      if (detected) {
+        setLinkFileType(detected);
+      }
+    } else {
+      setDetectedFileType(null);
+    }
+  }, [linkUrl]);
 
   const deleteModuleMutation = trpc.module.delete.useMutation({
     onSuccess: () => {
@@ -976,55 +998,26 @@ export default function AdminDashboard() {
                               {activeDocs && activeDocs.length > 0 ? (
                                 <div className="space-y-3">
                                   {activeDocs.map((doc) => (
-                                    <div
+                                    <DocumentCard
                                       key={doc.id}
-                                      className="glass-strong p-4 flex items-center gap-4 hover:shadow-lg transition-all"
-                                    >
-                                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center shrink-0">
-                                        <FileText className="w-5 h-5 text-[#b24760]" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <h4 className="font-medium text-[#1a1a2e] truncate">
-                                          {doc.title}
-                                        </h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <span
-                                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                              typeColors[doc.type]
-                                            }`}
-                                          >
-                                            {t(`types.${doc.type}`)}
-                                          </span>
-                                          <span className="text-xs text-[#6b6b7b]">
-                                            {t("dashboard.by")} {doc.uploaderName}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <a
-                                          href={doc.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="btn-glass text-xs py-2 px-4 shrink-0"
-                                        >
-                                          {t("common.open")}
-                                        </a>
-                                        {canManageCourses && (
-                                          <button
-                                            onClick={() =>
-                                              setDeleteModal({
-                                                type: "document",
-                                                id: doc.id,
-                                                title: doc.title,
-                                              })
-                                            }
-                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
+                                      id={doc.id}
+                                      title={doc.title}
+                                      type={doc.type}
+                                      url={doc.url}
+                                      uploaderName={doc.uploaderName}
+                                      createdAt={doc.createdAt}
+                                      typeColors={typeColors}
+                                      typeLabel={t(`types.${doc.type}`)}
+                                      onDelete={() =>
+                                        setDeleteModal({
+                                          type: "document",
+                                          id: doc.id,
+                                          title: doc.title,
+                                        })
+                                      }
+                                      canDelete={canManageCourses}
+                                      showPreview={true}
+                                    />
                                   ))}
                                 </div>
                               ) : (
@@ -1813,6 +1806,11 @@ export default function AdminDashboard() {
                   required
                 />
               </div>
+              {detectedFileType && (
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                  Detected: <span className="font-semibold capitalize">{detectedFileType}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.type")}</label>
                 <select
@@ -1825,6 +1823,19 @@ export default function AdminDashboard() {
                   <option value="test">{t("types.test")}</option>
                   <option value="tp">{t("types.tp")}</option>
                   <option value="resume">{t("types.resume")}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File Type</label>
+                <select
+                  value={linkFileType}
+                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file")}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  required
+                >
+                  <option value="spreadsheets">Spreadsheets</option>
+                  <option value="presentation">Presentation</option>
+                  <option value="file">File (PDF, Image, etc.)</option>
                 </select>
               </div>
               {linkError && (

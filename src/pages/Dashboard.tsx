@@ -23,6 +23,9 @@ import {
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS, DOC_TYPE_BG_COLORS } from "@/const";
+import { detectFileTypeFromUrl } from "@/lib/fileTypeDetection";
+import { DocumentCard } from "@/components/DocumentCard";
+import { ThumbnailCard } from "@/components/ThumbnailCard";
 
 type DocType = "cours" | "exam" | "test" | "tp" | "resume";
 
@@ -76,6 +79,8 @@ export default function Dashboard() {
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkType, setLinkType] = useState<DocType>("cours");
+  const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file">("file");
+  const [detectedFileType, setDetectedFileType] = useState<string | null>(null);
   const [linkError, setLinkError] = useState("");
   const [moduleName, setModuleName] = useState("");
   const [moduleSemester, setModuleSemester] = useState<number>(1);
@@ -184,10 +189,15 @@ export default function Dashboard() {
       setLinkTitle("");
       setLinkUrl("");
       setLinkError("");
+      setDetectedFileType(null);
+      setLinkFileType("file");
       if (selectedElement) {
         utils.document.list.invalidate({ elementId: selectedElement });
       }
       utils.document.recent.invalidate();
+    },
+    onError: (err) => {
+      setLinkError(err.message || "Failed to create document.");
     },
   });
   const createModuleMutation = trpc.module.create.useMutation({
@@ -362,7 +372,21 @@ export default function Dashboard() {
     setLinkTitle("");
     setLinkUrl("");
     setLinkError("");
+    setDetectedFileType(null);
+    setLinkFileType("file");
   };
+
+  useEffect(() => {
+    if (linkUrl && isGoogleDriveUrl(linkUrl)) {
+      const detected = detectFileTypeFromUrl(linkUrl);
+      setDetectedFileType(detected);
+      if (detected) {
+        setLinkFileType(detected);
+      }
+    } else {
+      setDetectedFileType(null);
+    }
+  }, [linkUrl]);
 
   if (authLoading) {
     return (
@@ -627,55 +651,26 @@ export default function Dashboard() {
                   {activeDocs && activeDocs.length > 0 ? (
                     <div className="space-y-3">
                       {activeDocs.map((doc) => (
-                        <div
+                        <DocumentCard
                           key={doc.id}
-                          className="glass-strong p-4 flex items-center gap-4 hover:shadow-lg transition-all"
-                        >
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#b24760]/10 to-[#b24760]/5 flex items-center justify-center shrink-0">
-                            <FileText className="w-5 h-5 text-[#b24760]" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-[#1a1a2e] truncate">
-                              {doc.title}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  typeColors[doc.type]
-                                }`}
-                              >
-                                {t(`types.${doc.type}`)}
-                              </span>
-                              <span className="text-xs text-[#6b6b7b]">
-                                {t("dashboard.by")} {doc.uploaderName}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn-glass text-xs py-2 px-4 shrink-0"
-                            >
-                              {t("common.open")}
-                            </a>
-                            {canManageDocs && (
-                              <button
-                                onClick={() =>
-                                  setDeleteModal({
-                                    type: "document",
-                                    id: doc.id,
-                                    title: doc.title,
-                                  })
-                                }
-                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                          id={doc.id}
+                          title={doc.title}
+                          type={doc.type}
+                          url={doc.url}
+                          uploaderName={doc.uploaderName}
+                          createdAt={doc.createdAt}
+                          typeColors={typeColors}
+                          typeLabel={t(`types.${doc.type}`)}
+                          onDelete={() =>
+                            setDeleteModal({
+                              type: "document",
+                              id: doc.id,
+                              title: doc.title,
+                            })
+                          }
+                          canDelete={canManageDocs}
+                          showPreview={true}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -949,28 +944,20 @@ export default function Dashboard() {
                   </h3>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {recentDocs.map((doc) => (
-                      <div
+                      <ThumbnailCard
                         key={doc.id}
-                        className="glass-strong p-4 glass-hover cursor-pointer"
+                        id={doc.id}
+                        title={doc.title}
+                        type={doc.type}
+                        url={doc.url}
+                        createdAt={doc.createdAt}
+                        typeColors={typeColors}
+                        typeLabel={t(`types.${doc.type}`)}
                         onClick={() => {
                           setSelectedElement(doc.elementId);
                           setActiveDocType(doc.type as DocType);
                         }}
-                      >
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${
-                            typeColors[doc.type]
-                          }`}
-                        >
-                          {typeLabels[doc.type]}
-                        </span>
-                        <h4 className="font-medium text-[#1a1a2e] truncate mb-1">
-                          {doc.title}
-                        </h4>
-                        <p className="text-xs text-[#6b6b7b]">
-                          {new Date(doc.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+                      />
                     ))}
                   </div>
                 </div>
@@ -1156,6 +1143,7 @@ export default function Dashboard() {
                 createDocMutation.mutate({
                   title: linkTitle,
                   type: linkType,
+                  fileType: linkFileType,
                   url: linkUrl,
                   elementId: selectedElement,
                 });
@@ -1183,6 +1171,24 @@ export default function Dashboard() {
                   placeholder="https://drive.google.com/..."
                   required
                 />
+              </div>
+              {detectedFileType && (
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                  Detected: <span className="font-semibold capitalize">{detectedFileType}</span>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File Type</label>
+                <select
+                  value={linkFileType}
+                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file")}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  required
+                >
+                  <option value="spreadsheets">Spreadsheets</option>
+                  <option value="presentation">Presentation</option>
+                  <option value="file">File (PDF, Image, etc.)</option>
+                </select>
               </div>
               {linkError && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
