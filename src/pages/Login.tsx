@@ -125,7 +125,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#b24760] to-[#8e3850] shadow-lg shadow-[#b24760]/30 mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1a1a2e]">
+          <h1 className="text-2xl font-bold text-[#1a1a2e] font-quantify">
             Study<span className="text-[#b24760]">AM</span>
           </h1>
         </button>

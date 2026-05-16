@@ -416,7 +416,7 @@ export default function Dashboard() {
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
           {sidebarOpen && (
-            <span className="text-lg font-bold text-[#1a1a2e]">
+            <span className="text-lg font-bold text-[#1a1a2e] font-quantify">
               Study<span className="text-[#b24760]">AM</span>
             </span>
           )}
@@ -450,7 +450,7 @@ export default function Dashboard() {
           {sidebarOpen && (
             <div className="mt-3 pt-3 border-t border-[#f5d0d8]">
               <div className="flex items-center gap-3 px-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center text-white text-sm font-bold font-quantify">
                   {user.name?.charAt(0) || "S"}
                 </div>
                 <div className="overflow-hidden">

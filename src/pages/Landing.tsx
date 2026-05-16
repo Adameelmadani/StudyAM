@@ -37,7 +37,7 @@ export default function Landing() {
             className="flex items-center gap-2 bg-transparent border-0 hover:opacity-90 focus:outline-none"
           >
             <GraduationCap className="w-8 h-8 text-[#b24760]" />
-            <span className="text-xl font-bold">
+            <span className="text-xl font-bold font-quantify">
               Study<span className="text-[#b24760]">AM</span>
             </span>
           </button>
@@ -166,7 +166,7 @@ export default function Landing() {
             className="flex items-center justify-center gap-2 mb-4 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
           >
             <GraduationCap className="w-6 h-6 text-[#b24760]" />
-            <span className="text-xl font-bold text-white">
+            <span className="text-xl font-bold text-white font-quantify">
               Study<span className="text-[#b24760]">AM</span>
             </span>
           </button>
