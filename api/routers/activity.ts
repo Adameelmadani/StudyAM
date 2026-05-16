@@ -31,7 +31,7 @@ export const activityRouter = createRouter({
 
       let logs;
       
-      // If rep or promo rep, filter by context
+      // If rep or promo rep, filter by context and exclude admin actions
       if (isPromoRep || isRep) {
         const conditions = [eq(activityLog.yearId, ctx.user.yearId!)];
         
@@ -56,10 +56,13 @@ export const activityRouter = createRouter({
           .limit(limit);
         
         const results = await query;
-        return results.map(r => ({
-          ...r.log,
-          performerName: r.performer.name || "Unknown",
-        }));
+        // Exclude activities performed by admins
+        return results
+          .filter(r => r.performer.role !== "admin")
+          .map(r => ({
+            ...r.log,
+            performerName: r.performer.name || "Unknown",
+          }));
       }
 
       // Admin logic

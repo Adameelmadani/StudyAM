@@ -151,7 +151,7 @@ export default function AdminDashboard() {
   const { data: years } = trpc.year.list.useQuery();
   const { data: allSectors } = trpc.sector.list.useQuery(undefined, { enabled: canAccess });
   const { data: activityLogs } = trpc.activity.list.useQuery(
-    { limit: 50 },
+    { limit: 20 },
     { enabled: canAccess && activeTab === "activity" }
   );
 
