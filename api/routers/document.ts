@@ -5,7 +5,7 @@ import {
   representativeQuery,
 } from "../middleware";
 import { getDb } from "../queries/connection";
-import { documents, elements, modules, users, moduleSectors } from "@db/schema";
+import { documents, elements, modules, users, moduleSectors, activityLog } from "@db/schema";
 import { eq, and, desc, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import type { Module, Element, Document } from "@db/schema";
@@ -191,6 +191,21 @@ export const documentRouter = createRouter({
       });
 
       const docId = Number(result[0].insertId);
+
+      // Log activity
+      const mod = await db.query.modules.findFirst({
+        where: eq(modules.id, element.moduleId),
+      });
+      await db.insert(activityLog).values({
+        action: "upload",
+        entityType: "document",
+        entityId: docId,
+        yearId: mod?.yearId,
+        sectorId: mod?.sectorId,
+        description: `Uploaded document: ${input.title}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.documents.findFirst({ where: eq(documents.id, docId) });
     }),
 
@@ -257,6 +272,24 @@ export const documentRouter = createRouter({
 
       const { id, ...data } = input;
       await db.update(documents).set(data).where(eq(documents.id, id));
+
+      // Log activity
+      const el = await db.query.elements.findFirst({
+        where: eq(elements.id, doc.elementId),
+      });
+      const mod = el ? await db.query.modules.findFirst({
+        where: eq(modules.id, el.moduleId),
+      }) : null;
+      await db.insert(activityLog).values({
+        action: "edit_document",
+        entityType: "document",
+        entityId: id,
+        yearId: mod?.yearId,
+        sectorId: mod?.sectorId,
+        description: `Updated document: ${input.title || doc.title}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.documents.findFirst({ where: eq(documents.id, id) });
     }),
 
@@ -301,6 +334,24 @@ export const documentRouter = createRouter({
       }
 
       await db.delete(documents).where(eq(documents.id, input.id));
+
+      // Log activity
+      const el = await db.query.elements.findFirst({
+        where: eq(elements.id, doc.elementId),
+      });
+      const mod = el ? await db.query.modules.findFirst({
+        where: eq(modules.id, el.moduleId),
+      }) : null;
+      await db.insert(activityLog).values({
+        action: "delete_document",
+        entityType: "document",
+        entityId: input.id,
+        yearId: mod?.yearId,
+        sectorId: mod?.sectorId,
+        description: `Deleted document: ${doc.title}`,
+        performedBy: ctx.user.id,
+      });
+
       return { success: true };
     }),
 

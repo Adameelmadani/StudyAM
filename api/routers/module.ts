@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery, representativeQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { modules, moduleSectors } from "@db/schema";
+import { modules, moduleSectors, activityLog } from "@db/schema";
 import { eq, and, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -131,6 +131,20 @@ export const moduleRouter = createRouter({
           });
         }
       }
+      
+      // Log activity
+      const finalYearId = (isRepresentative || isPromoRepresentative) ? ctx.user.yearId : input.yearId;
+      const finalSectorId = isRepresentative ? (ctx.user.sectorId || null) : (input.sectorId || null);
+      
+      await db.insert(activityLog).values({
+        action: "add_module",
+        entityType: "module",
+        entityId: modId,
+        yearId: finalYearId || null,
+        sectorId: finalSectorId || null,
+        description: `Created module: ${input.name}`,
+        performedBy: ctx.user.id,
+      });
 
       return db.query.modules.findFirst({ where: eq(modules.id, modId) });
     }),
@@ -192,6 +206,17 @@ export const moduleRouter = createRouter({
         }
       }
 
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "edit_module",
+        entityType: "module",
+        entityId: id,
+        yearId: mod.yearId,
+        sectorId: mod.sectorId,
+        description: `Updated module: ${input.name || mod.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.modules.findFirst({ where: eq(modules.id, id) });
     }),
 
@@ -226,6 +251,18 @@ export const moduleRouter = createRouter({
 
       await db.delete(moduleSectors).where(eq(moduleSectors.moduleId, input.id));
       await db.delete(modules).where(eq(modules.id, input.id));
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "delete_module",
+        entityType: "module",
+        entityId: input.id,
+        yearId: mod.yearId,
+        sectorId: mod.sectorId,
+        description: `Deleted module: ${mod.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return { success: true };
     }),
 });

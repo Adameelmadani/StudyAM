@@ -22,16 +22,28 @@ export const activityRouter = createRouter({
       const limit = input?.limit || 50;
 
       const isPromoRep = ctx.user.role === "promo_representative";
+      const isRep = ctx.user.role === "representative";
       const isAdmin = ctx.user.role === "admin";
 
-      if (!isAdmin && !isPromoRep) {
+      if (!isAdmin && !isPromoRep && !isRep) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
       let logs;
       
-      // If promo rep, we need to join with users to filter by year
-      if (isPromoRep) {
+      // If rep or promo rep, filter by context
+      if (isPromoRep || isRep) {
+        const conditions = [eq(activityLog.yearId, ctx.user.yearId!)];
+        
+        if (isRep) {
+          // Reps only see activities for their specific sector
+          conditions.push(eq(activityLog.sectorId, ctx.user.sectorId!));
+        }
+
+        if (input?.entityType) {
+          conditions.push(eq(activityLog.entityType, input.entityType));
+        }
+
         const query = db
           .select({
             log: activityLog,
@@ -39,12 +51,7 @@ export const activityRouter = createRouter({
           })
           .from(activityLog)
           .innerJoin(users, eq(activityLog.performedBy, users.id))
-          .where(
-            and(
-              eq(users.yearId, ctx.user.yearId),
-              input?.entityType ? eq(activityLog.entityType, input.entityType) : undefined
-            )
-          )
+          .where(and(...conditions))
           .orderBy(desc(activityLog.createdAt))
           .limit(limit);
         
@@ -97,9 +104,16 @@ export const activityRouter = createRouter({
           "delete_document",
           "add_module",
           "add_element",
+          "edit_module",
+          "edit_element",
+          "delete_module",
+          "delete_element",
+          "edit_document",
         ]),
         entityType: z.enum(["document", "user", "module", "element"]),
         entityId: z.number().int().positive().optional(),
+        yearId: z.number().int().positive().optional(),
+        sectorId: z.number().int().positive().optional(),
         description: z.string().min(1),
       })
     )
@@ -109,6 +123,8 @@ export const activityRouter = createRouter({
         action: input.action,
         entityType: input.entityType,
         entityId: input.entityId || null,
+        yearId: input.yearId || null,
+        sectorId: input.sectorId || null,
         description: input.description,
         performedBy: ctx.user.id,
       });

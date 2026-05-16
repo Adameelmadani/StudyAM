@@ -1279,12 +1279,12 @@ export default function AdminDashboard() {
                   className="glass-strong p-4 flex items-start gap-4 border-l-4 border-l-[#b24760]"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#fdf2f4] flex items-center justify-center shrink-0 mt-0.5">
-                    {log.action === "upload" && <UploadCloud className="w-4 h-4 text-green-600" />}
-                    {log.action === "edit" && <Pencil className="w-4 h-4 text-blue-600" />}
-                    {log.action === "delete" && <Trash2 className="w-4 h-4 text-red-600" />}
+                    {(log.action === "upload" || log.action === "add_module" || log.action === "add_element") && <UploadCloud className="w-4 h-4 text-green-600" />}
+                    {(log.action === "edit" || log.action === "edit_module" || log.action === "edit_element" || log.action === "edit_document") && <Pencil className="w-4 h-4 text-blue-600" />}
+                    {(log.action === "delete" || log.action === "delete_module" || log.action === "delete_element" || log.action === "delete_document" || log.action === "delete_student") && <Trash2 className="w-4 h-4 text-red-600" />}
                     {log.action === "grant_access" && <Shield className="w-4 h-4 text-[#b24760]" />}
                     {log.action === "revoke_access" && <Shield className="w-4 h-4 text-orange-600" />}
-                    {!["upload", "edit", "delete", "grant_access", "revoke_access"].includes(log.action) && (
+                    {!["upload", "edit", "delete", "grant_access", "revoke_access", "add_module", "add_element", "edit_module", "edit_element", "edit_document", "delete_module", "delete_element", "delete_document", "delete_student"].includes(log.action) && (
                       <Activity className="w-4 h-4 text-[#b24760]" />
                     )}
                   </div>

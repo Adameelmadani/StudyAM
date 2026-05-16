@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminQuery, authedQuery, createRouter, representativeQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { users, documents, elements, years } from "@db/schema";
+import { users, documents, elements, years, activityLog } from "@db/schema";
 import { eq, and, or } from "drizzle-orm";
 import type { User } from "@db/schema";
 import { TRPCError } from "@trpc/server";
@@ -97,10 +97,22 @@ export const userRouter = createRouter({
         role: z.enum(["student", "representative", "promo_representative", "admin"]).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const { id, ...data } = input;
       await db.update(users).set(data).where(eq(users.id, id));
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "edit",
+        entityType: "user",
+        entityId: id,
+        yearId: data.yearId || null,
+        sectorId: data.sectorId || null,
+        description: `Updated user info: ${data.name || id}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.users.findFirst({ where: eq(users.id, id) });
     }),
 
@@ -176,6 +188,18 @@ export const userRouter = createRouter({
       }
 
       await db.delete(users).where(eq(users.id, input.id));
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "delete_student",
+        entityType: "user",
+        entityId: input.id,
+        yearId: u.yearId,
+        sectorId: u.sectorId,
+        description: `Deleted user: ${u.name} (${u.ensamCode})`,
+        performedBy: ctx.user.id,
+      });
+
       return { success: true };
     }),
 
@@ -216,6 +240,18 @@ export const userRouter = createRouter({
           isApproved: true,
         })
         .where(eq(users.id, input.userId));
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "grant_access",
+        entityType: "user",
+        entityId: input.userId,
+        yearId: input.yearId,
+        sectorId: input.sectorId || null,
+        description: `Granted ${input.role} access to ${targetUser.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.users.findFirst({ where: eq(users.id, input.userId) });
     }),
 
@@ -246,6 +282,18 @@ export const userRouter = createRouter({
           isApproved: true,
         })
         .where(eq(users.id, input.userId));
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "revoke_access",
+        entityType: "user",
+        entityId: input.userId,
+        yearId: targetUser.yearId,
+        sectorId: targetUser.sectorId,
+        description: `Revoked representative access from ${targetUser.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.users.findFirst({ where: eq(users.id, input.userId) });
     }),
 

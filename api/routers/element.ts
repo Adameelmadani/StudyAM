@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery, representativeQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { elements, modules, documents, moduleSectors } from "@db/schema";
+import { elements, modules, documents, moduleSectors, activityLog } from "@db/schema";
 import { eq, and, isNull, or, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -150,6 +150,18 @@ export const elementRouter = createRouter({
         color: input.color || "#b24760",
       });
       const elId = Number(result[0].insertId);
+
+      // Log activity
+      await db.insert(activityLog).values({
+        action: "add_element",
+        entityType: "element",
+        entityId: elId,
+        yearId: mod.yearId,
+        sectorId: mod.sectorId,
+        description: `Created element: ${input.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.elements.findFirst({ where: eq(elements.id, elId) });
     }),
 
@@ -201,6 +213,21 @@ export const elementRouter = createRouter({
         .update(elements)
         .set(data)
         .where(eq(elements.id, id));
+
+      // Log activity
+      const mod = await db.query.modules.findFirst({
+        where: eq(modules.id, el.moduleId),
+      });
+      await db.insert(activityLog).values({
+        action: "edit_element",
+        entityType: "element",
+        entityId: id,
+        yearId: mod?.yearId,
+        sectorId: mod?.sectorId,
+        description: `Updated element: ${input.name || el.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return db.query.elements.findFirst({ where: eq(elements.id, id) });
     }),
 
@@ -240,6 +267,21 @@ export const elementRouter = createRouter({
       }
 
       await db.delete(elements).where(eq(elements.id, input.id));
+
+      // Log activity
+      const mod = await db.query.modules.findFirst({
+        where: eq(modules.id, el.moduleId),
+      });
+      await db.insert(activityLog).values({
+        action: "delete_element",
+        entityType: "element",
+        entityId: input.id,
+        yearId: mod?.yearId,
+        sectorId: mod?.sectorId,
+        description: `Deleted element: ${el.name}`,
+        performedBy: ctx.user.id,
+      });
+
       return { success: true };
     }),
 });
