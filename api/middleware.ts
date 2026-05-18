@@ -38,7 +38,6 @@ function requireRole(role: string) {
   });
 }
 
-// Helper to check if user is admin OR representative (approved) OR promo_representative (approved)
 const requireRepresentative = t.middleware(async (opts) => {
   const { ctx, next } = opts;
 

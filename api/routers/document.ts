@@ -192,7 +192,6 @@ export const documentRouter = createRouter({
 
       const docId = Number(result[0].insertId);
 
-      // Log activity
       const mod = await db.query.modules.findFirst({
         where: eq(modules.id, element.moduleId),
       });
