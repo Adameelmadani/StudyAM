@@ -1,6 +1,5 @@
 import { getDb } from "../api/queries/connection";
-import { years, sectors, yearSectors, users } from "./schema";
-import { eq } from "drizzle-orm";
+import { years, sectors, yearSectors } from "./schema";
 import type { Year, Sector } from "./schema";
 
 async function seed() {
@@ -26,12 +25,17 @@ async function seed() {
   const existingSectors = await db.select().from(sectors);
   if (existingSectors.length === 0) {
     await db.insert(sectors).values([
-      { name: "Mécanique et Structures", description: "Mechanical engineering and structural analysis" },
-      { name: "Électrotechnique et Électronique de Puissance", description: "Electrical engineering and power electronics" },
-      { name: "Informatique et Automatique", description: "Computer science and automation" },
-      { name: "Génie des Procédés et Energétique", description: "Process engineering and energy" },
-      { name: "Génie Civil et Construction", description: "Civil engineering and construction" },
-      { name: "Industriel et Management", description: "Industrial engineering and management" },
+      { name: "GE-DI", description: "Génie Electromécanique : Digitalisation Industrielle" },
+      { name: "GE-MCI", description: "Génie Electromécanique : Maintenance et Commande Industrielles" },
+      { name: "GIEO", description: "Génie Industriel : Excellence Opérationnelle" },
+      { name: "GIP", description: "Génie Industriel et Productique" },
+      { name: "GM-CISM", description: "Génie Mécanique : Conception et Industrialisation des Systèmes Mécaniques" },
+      { name: "GM-IMS", description: "Génie Mécanique : Ingénierie Mécanique et Structures" },
+      { name: "GM-MPF", description: "Génie Mécanique : Matériaux et Procédés de Fabrication" },
+      { name: "GME", description: "Génie Mécanique : Energétique" },
+      { name: "GI-ILSI", description: "Génie Informatique : Ingénierie Logicielle et Systèmes Intelligents" },
+      { name: "IATD-SI", description: "Intelligence Artificielle et Technologies de Données : Systèmes Industriels" },
+      { name: "GC", description: "Génie Civil" },
     ]);
     console.log("Sectors seeded");
   } else {
@@ -57,25 +61,6 @@ async function seed() {
     console.log(`YearSectors seeded (${junctionData.length} junctions)`);
   } else {
     console.log("YearSectors already exist");
-  }
-
-  // ─── Seed Admin User ─────────────────────────────────────────
-  const existingAdmin = await db.select().from(users).where(eq(users.ensamCode, "ADMIN001"));
-  if (existingAdmin.length === 0) {
-    await db.insert(users).values({
-      ensamCode: "ADMIN001",
-      name: "System Administrator",
-      email: "admin@ensam.ac.ma",
-      passwordHash: "$2b$10$p3KVF2FyjJz44sL0/v7DMe9E9o4Fd55vHnlSE3pjo7wgx/hYUpQTy",
-      role: "admin",
-      isApproved: true,
-    });
-    console.log("Admin user created");
-  } else {
-    await db.update(users)
-      .set({ passwordHash: "$2b$10$p3KVF2FyjJz44sL0/v7DMe9E9o4Fd55vHnlSE3pjo7wgx/hYUpQTy" })
-      .where(eq(users.ensamCode, "ADMIN001"));
-    console.log("Admin password updated");
   }
 
   console.log("Seeding complete!");
