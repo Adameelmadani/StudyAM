@@ -119,7 +119,7 @@ export default function Login() {
         {/* Logo */}
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/studyam")}
           className="text-center mb-6 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
         >
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#b24760] to-[#8e3850] shadow-lg shadow-[#b24760]/30 mb-4">

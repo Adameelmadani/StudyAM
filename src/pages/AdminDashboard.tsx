@@ -419,7 +419,7 @@ export default function AdminDashboard() {
       >
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/studyam")}
           className="p-4 flex items-center gap-3 mb-6 w-full text-left bg-transparent border-0 hover:opacity-90 focus:outline-none"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">

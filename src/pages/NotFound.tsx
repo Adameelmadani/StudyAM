@@ -17,7 +17,7 @@ export default function NotFound() {
           {t("notFound.desc")}
         </p>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/studyam")}
           className="btn-primary inline-flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
