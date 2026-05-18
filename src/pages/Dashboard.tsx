@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
-import {
+import { Menu, X,
   LayoutDashboard,
   BookOpen,
   Settings,
@@ -15,7 +15,7 @@ import {
   ChevronDown as ChevronDownIcon,
   FolderOpen,
   Link2,
-  X,
+
   Trash2,
   Pencil,
   Check,
@@ -72,7 +72,7 @@ export default function Dashboard() {
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set([2]));
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeDocType, setActiveDocType] = useState<DocType | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
@@ -401,11 +401,16 @@ export default function Dashboard() {
   if (!isAuthenticated || !user) return null;
 
   return (
-    <div className="min-h-screen page-bg flex">
+    <div className="min-h-screen page-bg flex flex-col md:flex-row">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
       {/* Sidebar */}
       <aside
-        className={`sidebar fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarOpen ? "w-64" : "w-16"
-          }`}
+        className={`sidebar fixed top-0 bottom-0 left-0 z-40 w-64 flex flex-col transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 md:w-64`}
       >
         <button
           type="button"
@@ -415,93 +420,85 @@ export default function Dashboard() {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center shrink-0">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          {sidebarOpen && (
-            <span className="text-lg font-bold text-[#1a1a2e] font-quantify">
-              Study<span className="text-[#b24760]">AM</span>
-            </span>
-          )}
+          <span className="text-lg font-bold text-[#1a1a2e] font-quantify">
+            Study<span className="text-[#b24760]">AM</span>
+          </span>
         </button>
 
-        <nav className="px-2 space-y-1">
+        <nav className="px-2 space-y-1 flex-1 overflow-y-auto">
           <button
-            onClick={() => switchTab("courses")}
+            onClick={() => { switchTab("courses"); setSidebarOpen(false); }}
             className={`nav-item w-full ${activeTab === "courses" ? "active" : ""}`}
           >
             <BookOpen className="w-5 h-5" />
-            {sidebarOpen && <span>{t("dashboard.myCourses")}</span>}
+            <span>{t("dashboard.myCourses")}</span>
           </button>
           <button
-            onClick={() => switchTab("settings")}
+            onClick={() => { switchTab("settings"); setSidebarOpen(false); }}
             className={`nav-item w-full ${activeTab === "settings" ? "active" : ""}`}
           >
             <Settings className="w-5 h-5" />
-            {sidebarOpen && <span>{t("common.settings")}</span>}
+            <span>{t("common.settings")}</span>
           </button>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="p-4">
           <button
             onClick={logout}
             className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>{t("common.logout")}</span>}
+            <span>{t("common.logout")}</span>
           </button>
-          {sidebarOpen && (
-            <div className="mt-3 pt-3 border-t border-[#f5d0d8]">
-              <div className="flex items-center gap-3 px-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center text-white text-sm font-bold font-quantify">
-                  {user.name?.charAt(0) || "S"}
-                </div>
-                <div className="overflow-hidden">
-                  <p className="text-sm font-medium text-[#1a1a2e] truncate">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-[#6b6b7b] truncate">
-                    {user.ensamCode}
-                  </p>
-                </div>
+          <div className="mt-3 pt-3 border-t border-[#f5d0d8]">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center text-white text-sm font-bold font-quantify">
+                {user.name?.charAt(0) || "S"}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium text-[#1a1a2e] truncate">
+                  {user.name}
+                </p>
+                <p className="text-xs text-[#6b6b7b] truncate">
+                  {user.ensamCode}
+                </p>
               </div>
             </div>
-          )}
+          </div>
         </div>
-
-        {/* Toggle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white border border-[#f5d0d8] flex items-center justify-center shadow-md hover:shadow-lg transition-shadow"
-        >
-          {sidebarOpen ? (
-            <ChevronRight className="w-3 h-3 text-[#b24760]" />
-          ) : (
-            <ChevronDownIcon className="w-3 h-3 text-[#b24760] rotate-90" />
-          )}
-        </button>
       </aside>
 
       {/* Main Content */}
-      <main
-        className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"
-          }`}
-      >
+      <main className="flex-1 md:ml-64">
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <div id="dashboard-section" />
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-[#1a1a2e]">
-                {activeTab === "courses"
-                  ? t("dashboard.welcomeUser", { name: user.name || "Student" })
-                  : t("common.settings")}
-              </h1>
-              {activeTab === "courses" && (
-                <p className="text-[#6b6b7b] mt-1">
-                  {t("common.year")} {selectedYearData?.name || "..."}
-                  {selectedSector && sectors
-                    ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
-                    : ""}
-                </p>
-              )}
+            <div className="flex items-center gap-3">
+              {/* Mobile hamburger */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((o) => !o)}
+                className="md:hidden p-2 rounded-lg hover:bg-[#fdf2f4] text-[#b24760] transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-[#1a1a2e]">
+                  {activeTab === "courses"
+                    ? t("dashboard.welcomeUser", { name: user.name || "Student" })
+                    : t("common.settings")}
+                </h1>
+                {activeTab === "courses" && (
+                  <p className="text-[#6b6b7b] mt-1">
+                    {t("common.year")} {selectedYearData?.name || "..."}
+                    {selectedSector && sectors
+                      ? `, ${sectors.find((s) => s.id === selectedSector)?.name}`
+                      : ""}
+                  </p>
+                )}
+              </div>
             </div>
             <LanguageSwitcher />
           </div>

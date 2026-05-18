@@ -28,6 +28,7 @@ import {
   X,
   Check,
   Video,
+  Menu,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -61,6 +62,7 @@ export default function AdminDashboard() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading, isAdmin, isPromoRepresentative, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showGrantModal, setShowGrantModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
@@ -401,8 +403,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen page-bg flex flex-col md:flex-row">
+      {/* Mobile overlay backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar relative w-full md:w-64 md:fixed md:left-0 md:top-0 md:bottom-0 md:z-40 border-b border-[#f5d0d8] md:border-b-0">
+      <aside
+        className={`sidebar fixed top-0 bottom-0 left-0 z-40 w-64 flex flex-col transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 md:w-64`}
+      >
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -422,11 +436,11 @@ export default function AdminDashboard() {
           </span>
         </div>
 
-        <nav className="px-2 space-y-1">
+        <nav className="px-2 space-y-1 flex-1 overflow-y-auto">
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
               className={`nav-item w-full ${activeTab === item.id ? "active" : ""}`}
             >
               <item.icon className="w-5 h-5" />
@@ -435,7 +449,7 @@ export default function AdminDashboard() {
           ))}
         </nav>
 
-        <div className="md:absolute md:bottom-0 md:left-0 md:right-0 p-4">
+        <div className="p-4">
           <button
             onClick={logout}
             className="nav-item w-full text-red-500 hover:text-red-600 hover:bg-red-50"
@@ -463,13 +477,24 @@ export default function AdminDashboard() {
       <main className="flex-1 md:ml-64">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-[#1a1a2e]">
-                {navItems.find((n) => n.id === activeTab)?.label}
-              </h1>
-              <p className="text-[#6b6b7b] mt-1">
-                {t("admin.managePlatform")}
-              </p>
+            <div className="flex items-center gap-3">
+              {/* Mobile hamburger */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((o) => !o)}
+                className="md:hidden p-2 rounded-lg hover:bg-[#fdf2f4] text-[#b24760] transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-[#1a1a2e]">
+                  {navItems.find((n) => n.id === activeTab)?.label}
+                </h1>
+                <p className="text-[#6b6b7b] mt-1">
+                  {t("admin.managePlatform")}
+                </p>
+              </div>
             </div>
             <LanguageSwitcher />
           </div>
