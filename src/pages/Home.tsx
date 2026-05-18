@@ -9,10 +9,10 @@ export default function Home() {
         <div className="mb-12 max-w-3xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#b24760]/15 bg-white/75 px-4 py-2 text-sm font-medium text-[#8e3850] shadow-sm backdrop-blur">
             <Presentation className="h-4 w-4" />
-            ADEAM presentation
+            ADEAM
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-[#1a1a2e] md:text-6xl">
-            Discover the two entry points of the platform.
+            Discover the two entry points of the platform
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[#5f6275] md:text-lg">
             This page introduces ADEAM and gives access to the StudyAM experience, alongside the external ENSAM reservation portal.
@@ -51,7 +51,7 @@ export default function Home() {
               ENSAM reservation portal
             </h2>
             <p className="mt-4 max-w-xl text-base leading-7 text-white/75">
-              Go to the reservation page for ENSAM. This opens the external service used for bookings and reservations.
+              Go to the reservation page for ENSAM. This opens the external service used for reservations.
             </p>
             <div className="mt-8">
               <a
