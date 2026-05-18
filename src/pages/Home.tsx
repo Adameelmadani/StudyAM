@@ -43,7 +43,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="group rounded-[2rem] border border-white/60 bg-[#1a1a2e] p-8 text-white shadow-[0_20px_70px_rgba(26,26,46,0.16)] transition-transform duration-300 hover:-translate-y-1">
+          <div className="group rounded-[2rem] border border-white/60 bg-[#235b73] p-8 text-white shadow-[0_20px_70px_rgba(26,26,46,0.16)] transition-transform duration-300 hover:-translate-y-1">
             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/10">
               <School className="h-7 w-7" />
             </div>
