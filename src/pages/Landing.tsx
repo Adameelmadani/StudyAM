@@ -45,13 +45,13 @@ export default function Landing() {
             <LanguageSwitcher />
             <button
               onClick={handleAuthAction}
-              className="btn-glass text-sm py-2 px-5"
+              className="btn-glass text-[12px] sm:text-sm py-2 px-5"
             >
               {t("common.signIn")}
             </button>
             <button
               onClick={handleAuthAction}
-              className="btn-primary text-sm py-2 px-5"
+              className="btn-primary text-[12px] sm:text-sm py-2 px-5"
             >
               {t("common.getStarted")}
             </button>
