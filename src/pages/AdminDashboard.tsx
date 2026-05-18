@@ -1080,7 +1080,7 @@ export default function AdminDashboard() {
                           const isSemesterExpanded = expandedSemesters.has(sem);
 
                           return (
-                            <div key={sem} className="glass-strong overflow-hidden">
+                            <div key={sem} className="glass-strong min-w-0 overflow-hidden">
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -1091,13 +1091,13 @@ export default function AdminDashboard() {
                                     toggleSemester(sem);
                                   }
                                 }}
-                                className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                                className="w-full p-5 flex flex-col gap-4 text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer sm:flex-row sm:items-center sm:justify-between"
                               >
-                                <div className="flex items-center gap-4">
+                                <div className="flex min-w-0 items-center gap-4">
                                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#b24760] to-[#8e3850] flex items-center justify-center">
                                     <Folder className="w-6 h-6 text-white" />
                                   </div>
-                                  <div>
+                                  <div className="min-w-0">
                                     <h3 className="font-semibold text-[#1a1a2e]">
                                       {getSemesterName(yearName, sem)}
                                     </h3>
@@ -1116,7 +1116,7 @@ export default function AdminDashboard() {
                                 <div className="border-t border-[#f5d0d8] p-5 space-y-4 animate-fadeInUp">
                                   {semModules.length > 0 ? (
                                     semModules.map((mod) => (
-                                      <div key={mod.id} className="glass-strong overflow-hidden">
+                                      <div key={mod.id} className="glass-strong min-w-0 overflow-hidden">
                                         <div
                                           role="button"
                                           tabIndex={0}
@@ -1127,9 +1127,9 @@ export default function AdminDashboard() {
                                               toggleModule(mod.id);
                                             }
                                           }}
-                                          className="w-full p-5 flex items-center justify-between text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer"
+                                          className="w-full p-5 flex flex-col gap-4 text-left hover:bg-[#fdf2f4]/50 transition-colors cursor-pointer sm:flex-row sm:items-center sm:justify-between"
                                         >
-                                          <div className="flex items-center gap-4">
+                                          <div className="flex min-w-0 items-center gap-4">
                                             <div
                                               className="w-12 h-12 rounded-xl flex items-center justify-center"
                                               style={{
@@ -1138,17 +1138,17 @@ export default function AdminDashboard() {
                                             >
                                               <Folder className="w-6 h-6 text-white" />
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                               <h3 className="font-semibold text-[#1a1a2e]">
                                                 {mod.name}
                                               </h3>
-                                              <p className="text-sm text-[#6b6b7b]">
+                                              <p className="text-sm text-[#6b6b7b] break-words">
                                                 {mod.description || t("dashboard.openFolder")}
                                               </p>
                                             </div>
                                           </div>
-                                          <div className="flex items-center gap-3">
-                                            <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium">
+                                          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                                            <span className="px-3 py-1 rounded-full bg-[#fdf2f4] text-[#b24760] text-xs font-medium whitespace-nowrap">
                                               {moduleElements && expandedModule === mod.id
                                                 ? t("dashboard.elementsCount", { count: moduleElements.length })
                                                 : t("dashboard.openFolder")}
