@@ -1,10 +1,17 @@
 import { getDb } from "../api/queries/connection";
-import { years, sectors, yearSectors } from "./schema";
+import { env } from "../api/lib/env";
+import bcrypt from "bcryptjs";
+import { users, years, sectors, yearSectors } from "./schema";
+import { eq } from "drizzle-orm";
 import type { Year, Sector } from "./schema";
 
 async function seed() {
   const db = getDb();
   console.log("Seeding database...");
+
+  if (!env.adminCode || !env.adminName || !env.adminEmail || !env.adminPassword) {
+    throw new Error("Missing admin seed environment variables. Please set ADMIN_CODE, ADMIN_NAME, ADMIN_EMAIL, and ADMIN_PASSWORD.");
+  }
 
   // ─── Seed Years ──────────────────────────────────────────────
   const existingYears = await db.select().from(years);
@@ -61,6 +68,32 @@ async function seed() {
     console.log(`YearSectors seeded (${junctionData.length} junctions)`);
   } else {
     console.log("YearSectors already exist");
+  }
+
+  // ─── Seed Admin User ─────────────────────────────────────────
+  const adminPasswordHash = await bcrypt.hash(env.adminPassword, 10);
+  const existingAdminRows = await db.select().from(users).where(eq(users.ensamCode, env.adminCode));
+  if (existingAdminRows.length === 0) {
+    await db.insert(users).values({
+      ensamCode: env.adminCode,
+      name: env.adminName,
+      email: env.adminEmail,
+      passwordHash: adminPasswordHash,
+      role: "admin",
+      isApproved: true,
+    });
+    console.log("Admin user seeded");
+  } else {
+    await db.update(users)
+      .set({
+        name: env.adminName,
+        email: env.adminEmail,
+        passwordHash: adminPasswordHash,
+        role: "admin",
+        isApproved: true,
+      })
+      .where(eq(users.ensamCode, env.adminCode));
+    console.log("Admin user updated");
   }
 
   console.log("Seeding complete!");
