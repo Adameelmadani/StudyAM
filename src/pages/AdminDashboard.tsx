@@ -33,7 +33,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS } from "@/const";
-import { detectFileTypeFromUrl, getEmbedUrl } from "@/lib/fileTypeDetection";
+import { detectFileTypeFromUrl, detectFileTypeFromName, getEmbedUrl } from "@/lib/fileTypeDetection";
 import { DocumentCard } from "@/components/DocumentCard";
 import { ThumbnailCard } from "@/components/ThumbnailCard";
 
@@ -92,12 +92,15 @@ export default function AdminDashboard() {
     title: string;
   } | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkMode, setLinkMode] = useState<"url" | "file">("url");
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
+  const [linkFile, setLinkFile] = useState<File | null>(null);
   const [linkType, setLinkType] = useState<DocType>("cours");
   const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file" | "video">("file");
   const [detectedFileType, setDetectedFileType] = useState<string | null>(null);
   const [linkError, setLinkError] = useState("");
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -156,6 +159,7 @@ export default function AdminDashboard() {
     { limit: 20 },
     { enabled: canAccess && activeTab === "activity" }
   );
+  const { data: googleDriveStatus } = trpc.googleDrive.status.useQuery(undefined, { enabled: canAccess });
 
   const { data: sectors } = trpc.sector.byYear.useQuery(
     { yearId: Number(selectedYear) },
@@ -224,8 +228,10 @@ export default function AdminDashboard() {
   const createDocMutation = trpc.document.create.useMutation({
     onSuccess: () => {
       setShowLinkModal(false);
+      setLinkMode("url");
       setLinkTitle("");
       setLinkUrl("");
+      setLinkFile(null);
       setLinkError("");
       setDetectedFileType(null);
       setLinkFileType("file");
@@ -236,27 +242,92 @@ export default function AdminDashboard() {
     },
   });
 
+  const connectGoogleDriveMutation = trpc.googleDrive.connectUrl.useMutation();
+  const disconnectGoogleDriveMutation = trpc.googleDrive.disconnect.useMutation({
+    onSuccess: () => {
+      utils.googleDrive.status.invalidate();
+    },
+  });
+
   const handleLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedElement) return;
     setLinkError("");
 
     try {
-      await createDocMutation.mutateAsync({
-        title: linkTitle,
-        url: linkUrl,
-        type: linkType,
-        fileType: linkFileType,
-        elementId: selectedElement,
+      if (linkMode === "url") {
+        await createDocMutation.mutateAsync({
+          title: linkTitle,
+          url: linkUrl,
+          type: linkType,
+          fileType: linkFileType,
+          elementId: selectedElement,
+        });
+        return;
+      }
+
+      if (!linkFile) {
+        setLinkError("Please select a file to upload");
+        return;
+      }
+
+      if (!googleDriveStatus?.connected) {
+        setLinkError("Connect your Google account before uploading files");
+        return;
+      }
+
+      setIsUploadingDocument(true);
+      const formData = new FormData();
+      formData.append("title", linkTitle);
+      formData.append("type", linkType);
+      formData.append("fileType", linkFileType);
+      formData.append("elementId", String(selectedElement));
+      formData.append("file", linkFile);
+
+      const token = localStorage.getItem("local_auth_token");
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        headers: token ? { "x-local-auth-token": token } : undefined,
+        body: formData,
+        credentials: "include",
       });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (!response.ok) {
+        throw new Error(payload.error || payload.message || "Failed to upload file");
+      }
+
+      setShowLinkModal(false);
+      setLinkMode("url");
+      setLinkTitle("");
+      setLinkUrl("");
+      setLinkFile(null);
+      setLinkError("");
+      setDetectedFileType(null);
+      setLinkFileType("file");
+      if (selectedElement) {
+        utils.document.list.invalidate({ elementId: selectedElement });
+      }
+      utils.document.recent.invalidate();
     } catch (err: unknown) {
       const error = err as { message?: string };
       setLinkError(error.message || "Failed to add link");
+    } finally {
+      setIsUploadingDocument(false);
     }
   };
 
   const isGoogleDriveYoutubeUrl = (url: string) =>
     /https?:\/\/(drive|docs)\.google\.com\//i.test(url);
+
+  const handleConnectGoogleDrive = async () => {
+    try {
+      const result = await connectGoogleDriveMutation.mutateAsync();
+      window.location.href = result.url;
+    } catch (error) {
+      setLinkError(error instanceof Error ? error.message : "Failed to connect Google account");
+    }
+  };
 
   useEffect(() => {
     if (linkUrl) {
@@ -269,6 +340,24 @@ export default function AdminDashboard() {
       setDetectedFileType(null);
     }
   }, [linkUrl]);
+
+  useEffect(() => {
+    if (linkMode !== "file") return;
+
+    if (!linkFile) {
+      setDetectedFileType(null);
+      return;
+    }
+
+    const detected = detectFileTypeFromName(linkFile.name, linkFile.type);
+    setDetectedFileType(detected);
+    if (detected) {
+      setLinkFileType(detected as any);
+    }
+    if (!linkTitle) {
+      setLinkTitle(linkFile.name.replace(/\.[^.]+$/, ""));
+    }
+  }, [linkFile, linkMode]);
 
   const deleteModuleMutation = trpc.module.delete.useMutation({
     onSuccess: () => {
@@ -1810,12 +1899,81 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-md min-h-[535px] animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveYoutubeUrl")}</h3>
-              <button onClick={() => setShowLinkModal(false)} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+              <h3 className="text-lg font-semibold text-[#1a1a2e]">
+                {linkMode === "url" ? t("dashboard.addDriveYoutubeUrl") : "Upload file to Drive"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setLinkMode("url");
+                  setLinkTitle("");
+                  setLinkUrl("");
+                  setLinkFile(null);
+                  setDetectedFileType(null);
+                  setLinkError("");
+                  setLinkFileType("file");
+                }}
+                className="p-1 rounded-lg hover:bg-[#fdf2f4]"
+              >
                 <X className="w-5 h-5 text-[#6b6b7b]" />
               </button>
             </div>
             <form onSubmit={handleLinkSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-white/70 border border-white/70">
+                <button
+                  type="button"
+                  onClick={() => setLinkMode("url")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                    linkMode === "url"
+                      ? "bg-[#1a1a2e] text-white shadow-sm"
+                      : "text-[#6b6b7b] hover:bg-[#f8f4f5]"
+                  }`}
+                >
+                  Add link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLinkMode("file")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                    linkMode === "file"
+                      ? "bg-[#1a1a2e] text-white shadow-sm"
+                      : "text-[#6b6b7b] hover:bg-[#f8f4f5]"
+                  }`}
+                >
+                  Upload file
+                </button>
+              </div>
+              {linkMode === "file" && (
+                <div className={`p-3 rounded-lg border text-sm ${googleDriveStatus?.connected ? "bg-green-50 border-green-200 text-green-700" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                  {googleDriveStatus?.connected ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        Connected Google account: <span className="font-semibold">{googleDriveStatus.email || "unknown"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => disconnectGoogleDriveMutation.mutate()}
+                        className="text-xs font-medium underline"
+                        disabled={disconnectGoogleDriveMutation.isLoading}
+                      >
+                        {disconnectGoogleDriveMutation.isLoading ? "Disconnecting..." : "Disconnect"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>Connect your Google account to upload files into the configured Drive folder.</div>
+                      <button
+                        type="button"
+                        onClick={handleConnectGoogleDrive}
+                        className="px-3 py-2 rounded-lg bg-[#1a1a2e] text-white text-xs font-medium"
+                        disabled={connectGoogleDriveMutation.isLoading}
+                      >
+                        {connectGoogleDriveMutation.isLoading ? "Connecting..." : "Connect Google"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.title")}</label>
                 <input
@@ -1827,17 +1985,32 @@ export default function AdminDashboard() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive Youtube URL</label>
-                <input
-                  type="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="https://drive.google.com/..."
-                  required
-                />
-              </div>
+              {linkMode === "url" ? (
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive or YouTube URL</label>
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    placeholder="https://drive.google.com/..."
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File to upload</label>
+                  <input
+                    type="file"
+                    onChange={(e) => setLinkFile(e.target.files?.[0] || null)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  />
+                  <p className="mt-2 text-xs text-[#6b6b7b]">
+                    The file will be uploaded to the configured Google Drive folder, not stored on this server.
+                  </p>
+                </div>
+              )}
               {detectedFileType && (
                 <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
                   Detected: <span className="font-semibold capitalize">{detectedFileType}</span>
@@ -1861,7 +2034,7 @@ export default function AdminDashboard() {
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File Type</label>
                 <select
                   value={linkFileType}
-                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file")}
+                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file" | "video")}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
                 >
@@ -1877,15 +2050,28 @@ export default function AdminDashboard() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowLinkModal(false)} className="flex-1 btn-glass">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLinkModal(false);
+                    setLinkMode("url");
+                    setLinkTitle("");
+                    setLinkUrl("");
+                    setLinkFile(null);
+                    setDetectedFileType(null);
+                    setLinkError("");
+                    setLinkFileType("file");
+                  }}
+                  className="flex-1 btn-glass"
+                >
                   {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
-                  disabled={createDocMutation.isLoading}
+                  disabled={createDocMutation.isLoading || isUploadingDocument}
                 >
-                  {createDocMutation.isLoading ? t("common.loading") : t("common.save")}
+                  {createDocMutation.isLoading || isUploadingDocument ? t("common.loading") : t("common.save")}
                 </button>
               </div>
             </form>

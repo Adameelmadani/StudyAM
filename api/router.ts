@@ -1,4 +1,5 @@
 import { authRouter } from "./auth-router";
+import { googleDriveRouter } from "./routers/googleDrive";
 import { localAuthRouter } from "./routers/localAuth";
 import { yearRouter } from "./routers/year";
 import { sectorRouter } from "./routers/sector";
@@ -12,6 +13,7 @@ import { createRouter, publicQuery } from "./middleware";
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
   auth: authRouter,
+  googleDrive: googleDriveRouter,
   localAuth: localAuthRouter,
   year: yearRouter,
   sector: sectorRouter,

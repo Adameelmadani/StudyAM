@@ -1,5 +1,24 @@
 export type FileType = "spreadsheets" | "presentation" | "file" | "video";
 
+const MIME_TYPE_MAP: Record<string, FileType> = {
+  "application/vnd.ms-powerpoint": "presentation",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "presentation",
+  "application/pdf": "file",
+  "application/msword": "file",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "file",
+  "application/vnd.ms-excel": "spreadsheets",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "spreadsheets",
+  "video/mp4": "video",
+  "video/quicktime": "video",
+  "video/webm": "video",
+  "video/x-matroska": "video",
+  "image/jpeg": "file",
+  "image/png": "file",
+  "image/gif": "file",
+  "image/webp": "file",
+  "image/svg+xml": "file",
+};
+
 const EXTENSION_MAP: Record<string, FileType> = {
   ppt: "presentation",
   pptx: "presentation",
@@ -14,6 +33,10 @@ const EXTENSION_MAP: Record<string, FileType> = {
   xlsx: "spreadsheets",
   ods: "spreadsheets",
   csv: "spreadsheets",
+  mp4: "video",
+  mov: "video",
+  webm: "video",
+  mkv: "video",
   jpg: "file",
   jpeg: "file",
   png: "file",
@@ -57,6 +80,25 @@ export function detectFileTypeFromUrl(url: string): FileType | null {
   } catch {
     return null;
   }
+}
+
+export function detectFileTypeFromName(fileName: string, mimeType?: string | null): FileType | null {
+  if (mimeType) {
+    const normalizedMimeType = mimeType.toLowerCase();
+    if (normalizedMimeType in MIME_TYPE_MAP) {
+      return MIME_TYPE_MAP[normalizedMimeType];
+    }
+  }
+
+  const match = fileName.toLowerCase().match(/\.([a-z0-9]+)$/i);
+  if (match) {
+    const ext = match[1];
+    if (ext in EXTENSION_MAP) {
+      return EXTENSION_MAP[ext];
+    }
+  }
+
+  return null;
 }
 
 export function validateFileType(

@@ -43,6 +43,15 @@ StudyAM is a web platform for organizing ENSAM academic resources by year, fili√
 
 2. Configure environment variables in `.env`:
 
+  For Google OAuth sign-in and uploads, also set:
+
+  - `GOOGLE_OAUTH_CLIENT_ID`
+  - `GOOGLE_OAUTH_CLIENT_SECRET`
+  - `GOOGLE_OAUTH_REDIRECT_URI`
+  - `GOOGLE_DRIVE_FOLDER_ID`
+
+    Then apply the schema change for Google account connections with `npm run db:push`.
+
 3. Run the database seed:
 
 	```bash
@@ -93,6 +102,12 @@ The admin account is created or updated from:
 - `ADMIN_NAME`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
+
+## Google Drive Uploads
+
+Users sign in with Google OAuth, which creates or reuses their StudyAM account automatically. Document uploads from the admin dashboard are sent to a configured Google Drive folder using the connected Google account for the current user. The app does not store the uploaded files on the application server; it saves the Drive URL in the database instead.
+
+The target folder should be shared with the connected Google account, or it should live inside a Shared Drive the account can access.
 
 ## Project Structure
 

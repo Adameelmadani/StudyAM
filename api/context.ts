@@ -1,11 +1,6 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import type { User } from "@db/schema";
-import jwt from "jsonwebtoken";
-import { getDb } from "./queries/connection";
-import { users } from "@db/schema";
-import { eq } from "drizzle-orm";
-
-const JWT_SECRET = process.env.APP_SECRET || "studyam-secret-key";
+import { getAuthenticatedUserFromRequest } from "./lib/auth";
 
 export type TrpcContext = {
   req: Request;
@@ -18,21 +13,9 @@ export async function createContext(
 ): Promise<TrpcContext> {
   const ctx: TrpcContext = { req: opts.req, resHeaders: opts.resHeaders };
   try {
-    const authHeader = opts.req.headers.get("x-local-auth-token");
-    if (authHeader) {
-      const decoded = jwt.verify(authHeader, JWT_SECRET) as {
-        userId: number;
-        role: string;
-        ensamCode: string;
-      };
-
-      const db = getDb();
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, decoded.userId),
-      });
-      if (user) {
-        ctx.user = user;
-      }
+    const user = await getAuthenticatedUserFromRequest(opts.req);
+    if (user) {
+      ctx.user = user;
     }
   } catch {
     // Authentication is optional here

@@ -60,6 +60,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
+    "googleapis": "^172.0.0",
     "hono": "^4.8.3",
     "i18next": "^26.0.10",
     "i18next-browser-languagedetector": "^8.2.1",
