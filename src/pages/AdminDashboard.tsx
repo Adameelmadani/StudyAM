@@ -1105,7 +1105,7 @@ export default function AdminDashboard() {
                             className="btn-primary flex items-center gap-2 text-sm"
                           >
                             <Link2 className="w-4 h-4" />
-                            {t("dashboard.addDriveYoutubeUrl")}
+                            {t("dashboard.addFile")}
                           </button>
                         )}
                       </div>
@@ -1897,7 +1897,7 @@ export default function AdminDashboard() {
       )}
       {showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="glass-strong p-8 w-full max-w-md min-h-[535px] animate-fadeInUp">
+          <div className="glass-strong p-8 w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-[#1a1a2e]">
                 {linkMode === "url" ? t("dashboard.addDriveYoutubeUrl") : "Upload file to Drive"}

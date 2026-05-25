@@ -99,6 +99,7 @@
     "academicYear": "Academic Year",
     "docsAvailable": "{{count}} document(s) available",
     "selectFolderDesc": "Select a folder to view documents.",
+    "addFile": "Add file",
     "addDriveYoutubeUrl": "Add Google Drive or Youtube URL",
     "by": "by",
     "noDocsYet": "No {{type}} documents yet",
