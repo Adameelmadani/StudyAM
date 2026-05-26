@@ -508,16 +508,16 @@ export default function Dashboard() {
   if (!isAuthenticated || !user) return null;
 
   return (
-    <div className="min-h-screen page-bg flex flex-col md:flex-row">
+    <div className="min-h-screen page-bg flex flex-col lg:flex-row">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       {/* Sidebar */}
       <aside
         className={`sidebar fixed top-0 bottom-0 left-0 z-40 w-64 flex flex-col transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:w-64`}
+          lg:translate-x-0 lg:w-64`}
       >
         <button
           type="button"
@@ -576,7 +576,7 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64">
+      <main className="flex-1 lg:ml-64">
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <div id="dashboard-section" />
           {/* Header */}
@@ -586,7 +586,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="md:hidden p-2 rounded-lg hover:bg-[#fdf2f4] text-[#b24760] transition-colors"
+                className="lg:hidden p-2 rounded-lg hover:bg-[#fdf2f4] text-[#b24760] transition-colors"
                 aria-label="Toggle sidebar"
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
