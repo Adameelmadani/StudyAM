@@ -120,7 +120,6 @@ export const userRouter = createRouter({
     .input(
       z.object({
         name: z.string().min(2).optional(),
-        email: z.string().email().optional(),
         yearId: z.number().int().positive().optional(),
         sectorId: z.number().int().positive().nullable().optional(),
       })
@@ -134,7 +133,6 @@ export const userRouter = createRouter({
       
       const updateData: any = {};
       if (input.name) updateData.name = input.name;
-      if (input.email) updateData.email = input.email;
 
       // Only standard students can change their year/sector
       if (!isRep && !isPromoRep && !isAdmin) {
@@ -160,6 +158,49 @@ export const userRouter = createRouter({
 
       await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
       return { success: true };
+    }),
+
+  completeProfile: authedQuery
+    .input(
+      z.object({
+        name: z.string().min(2).optional(),
+        ensamCode: z.string().min(3),
+        yearId: z.number().int().positive(),
+        sectorId: z.number().int().positive().nullable().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      const year = await db.query.years.findFirst({
+        where: eq(years.id, input.yearId),
+      });
+
+      if (!year) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Academic year not found" });
+      }
+
+      if (year.hasSectors && !input.sectorId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Sector is required for this year" });
+      }
+
+      const duplicate = await db.query.users.findFirst({
+        where: eq(users.ensamCode, input.ensamCode),
+      });
+
+      if (duplicate && duplicate.id !== ctx.user.id) {
+        throw new TRPCError({ code: "CONFLICT", message: "This ENSAM code is already in use" });
+      }
+
+      await db.update(users).set({
+        name: input.name ?? ctx.user.name,
+        ensamCode: input.ensamCode,
+        yearId: input.yearId,
+        sectorId: input.sectorId ?? null,
+        profileComplete: true,
+      }).where(eq(users.id, ctx.user.id));
+
+      return db.query.users.findFirst({ where: eq(users.id, ctx.user.id) });
     }),
 
   delete: representativeQuery

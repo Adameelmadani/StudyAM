@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import { or, eq } from "drizzle-orm";
 import type { User } from "@db/schema";
-import { users } from "@db/schema";
+import { users, years } from "@db/schema";
 import { getDb } from "../queries/connection";
+import { TRPCError } from "@trpc/server";
 import {
   buildGoogleOAuthUrl,
   exchangeGoogleOAuthCode,
@@ -11,31 +12,6 @@ import {
 } from "./googleDrive";
 
 const JWT_SECRET = process.env.APP_SECRET || "studyam-secret-key";
-
-function normalizeBaseEnsamCode(email: string): string {
-  const localPart = email.split("@")[0] || "googleuser";
-  const sanitized = localPart.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 50);
-  return sanitized || "googleuser";
-}
-
-async function ensureUniqueEnsamCode(baseCode: string): Promise<string> {
-  const db = getDb();
-  let candidate = baseCode.slice(0, 50) || "googleuser";
-  let suffix = 0;
-
-  while (true) {
-    const existing = await db.query.users.findFirst({
-      where: eq(users.ensamCode, candidate),
-    });
-    if (!existing) {
-      return candidate;
-    }
-
-    suffix += 1;
-    const suffixText = `-${suffix}`;
-    candidate = `${baseCode.slice(0, Math.max(1, 50 - suffixText.length))}${suffixText}`;
-  }
-}
 
 function buildAppAuthToken(user: User): string {
   return jwt.sign(
@@ -62,24 +38,30 @@ export async function handleGoogleAuthCallback(code: string): Promise<{ token: s
     throw new Error("Google account did not return an email address");
   }
 
-  const existing = await db.query.users.findFirst({
-    where: or(eq(users.email, userInfo.email), eq(users.googleEmail, userInfo.email)),
+  const existingByGoogleEmail = await db.query.users.findFirst({
+    where: eq(users.googleEmail, userInfo.email),
   });
+  const existingByEmail = existingByGoogleEmail
+    ? null
+    : await db.query.users.findFirst({
+      where: eq(users.email, userInfo.email),
+    });
+  const existing = existingByGoogleEmail || existingByEmail;
 
   const refreshToken = tokens.refresh_token || existing?.googleRefreshToken || null;
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
   let user: User;
   if (!existing) {
-    const ensamCode = await ensureUniqueEnsamCode(normalizeBaseEnsamCode(userInfo.email));
     const result = await db.insert(users).values({
       name: userInfo.name || userInfo.email,
       email: userInfo.email,
-      ensamCode,
+      ensamCode: null,
       passwordHash: null,
       role: "student",
       yearId: null,
       sectorId: null,
+      profileComplete: false,
       isApproved: true,
       avatar: userInfo.picture || null,
       googleEmail: userInfo.email,
@@ -114,8 +96,21 @@ export async function handleGoogleAuthCallback(code: string): Promise<{ token: s
     user = updatedUser;
   }
 
+  const year = user.yearId
+    ? await db.query.years.findFirst({ where: eq(years.id, user.yearId) })
+    : null;
+  const needsProfileCompletion =
+    !user.profileComplete ||
+    !user.ensamCode ||
+    !user.yearId ||
+    (year?.hasSectors && !user.sectorId);
+
   const token = buildAppAuthToken(user);
-  const destination = user.role === "admin" || user.role === "promo_representative" ? "/admin" : "/dashboard";
+  const destination = needsProfileCompletion
+    ? "/complete-profile"
+    : user.role === "admin" || user.role === "promo_representative"
+      ? "/admin"
+      : "/dashboard";
 
   return { token, destination };
 }
@@ -133,6 +128,19 @@ export async function handleGoogleDriveConnectCallback(userId: number, code: str
   const refreshToken = tokens.refresh_token || existing.googleRefreshToken;
   if (!refreshToken) {
     throw new Error("Google did not return a refresh token. Reconnect and approve offline access.");
+  }
+
+  if (userInfo.email) {
+    const conflictingUser = await db.query.users.findFirst({
+      where: eq(users.googleEmail, userInfo.email),
+    });
+
+    if (conflictingUser && conflictingUser.id !== userId) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "This Google account is already linked to another StudyAM account.",
+      });
+    }
   }
 
   await db.update(users).set({

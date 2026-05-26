@@ -9,6 +9,7 @@ export type AuthUser = {
   role: string;
   yearId: number | null;
   sectorId: number | null;
+  profileComplete: boolean;
   isApproved: boolean | null;
   avatar?: string | null;
 };
@@ -48,6 +49,7 @@ export function useAuth() {
         role: oauthUser.role,
         yearId: oauthUser.yearId,
         sectorId: oauthUser.sectorId,
+        profileComplete: oauthUser.profileComplete,
         isApproved: oauthUser.isApproved,
         avatar: oauthUser.avatar,
       };
@@ -61,6 +63,7 @@ export function useAuth() {
         role: localUser.role,
         yearId: localUser.yearId,
         sectorId: localUser.sectorId,
+        profileComplete: localUser.profileComplete,
         isApproved: localUser.isApproved,
         avatar: localUser.avatar,
       };
@@ -72,6 +75,7 @@ export function useAuth() {
   const isPromoRepresentative = user?.role === "promo_representative" && user?.isApproved;
   const isRepresentative = (user?.role === "representative" || user?.role === "promo_representative") && user?.isApproved;
   const isStudent = user?.role === "student";
+  const needsProfileCompletion = !!user && !user.profileComplete;
 
   const logout = useCallback(() => {
     localStorage.removeItem("local_auth_token");
@@ -87,6 +91,7 @@ export function useAuth() {
     isPromoRepresentative,
     isRepresentative,
     isStudent,
+    needsProfileCompletion,
     logout,
   };
 }

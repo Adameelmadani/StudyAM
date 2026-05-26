@@ -103,7 +103,6 @@ export default function AdminDashboard() {
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [editingModule, setEditingModule] = useState<{ id: number; name: string; color: string } | null>(null);
   const [editingElement, setEditingElement] = useState<{ id: number; name: string; color: string } | null>(null);
@@ -115,11 +114,16 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/login");
+      return;
     }
     if (!authLoading && isAuthenticated && !canAccess) {
       navigate("/dashboard");
+      return;
     }
-  }, [authLoading, isAuthenticated, canAccess, navigate]);
+    if (!authLoading && isAuthenticated && user && !user.profileComplete) {
+      navigate("/complete-profile");
+    }
+  }, [authLoading, isAuthenticated, canAccess, navigate, user]);
 
   // Lock year for promo reps
   useEffect(() => {
@@ -400,7 +404,6 @@ export default function AdminDashboard() {
     try {
       await updateProfileMutation.mutateAsync({
         name: editName,
-        email: editEmail,
       });
     } catch (err) {
       // Error handled by onError
@@ -409,7 +412,6 @@ export default function AdminDashboard() {
 
   const startEditing = () => {
     setEditName(user?.name || "");
-    setEditEmail(user?.email || "");
     setIsEditingSettings(true);
   };
 
@@ -1493,17 +1495,6 @@ export default function AdminDashboard() {
                         onChange={(e) => setEditName(e.target.value)}
                         className="w-full px-4 py-3 glass-input text-sm"
                         placeholder={t("common.fullName")}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
-                      <input
-                        type="email"
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
-                        className="w-full px-4 py-3 glass-input text-sm"
-                        placeholder={t("common.email")}
                         required
                       />
                     </div>

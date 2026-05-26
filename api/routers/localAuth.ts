@@ -50,6 +50,7 @@ export const localAuthRouter = createRouter({
         role: "student",
         yearId: input.yearId,
         sectorId: input.sectorId || null,
+        profileComplete: true,
         isApproved: true,
       });
 
@@ -80,6 +81,7 @@ export const localAuthRouter = createRouter({
           role: newUser.role,
           yearId: newUser.yearId,
           sectorId: newUser.sectorId,
+          profileComplete: newUser.profileComplete,
           isApproved: newUser.isApproved,
         },
       };
@@ -131,6 +133,7 @@ export const localAuthRouter = createRouter({
           role: user.role,
           yearId: user.yearId,
           sectorId: user.sectorId,
+          profileComplete: user.profileComplete,
           isApproved: user.isApproved,
         },
       };
@@ -147,6 +150,7 @@ export const localAuthRouter = createRouter({
         role: ctx.user.role,
         yearId: ctx.user.yearId,
         sectorId: ctx.user.sectorId,
+        profileComplete: ctx.user.profileComplete,
         isApproved: ctx.user.isApproved,
         avatar: ctx.user.avatar,
       };

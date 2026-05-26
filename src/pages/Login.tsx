@@ -32,12 +32,26 @@ export default function Login() {
   const [ensamCode, setEnsamCode] = useState("");
   const [password, setPassword] = useState("");
   const [googleError, setGoogleError] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [yearId, setYearId] = useState<number | "">("");
+  const [sectorId, setSectorId] = useState<number | "">("");
 
   const loginMutation = trpc.localAuth.login.useMutation();
+  const registerMutation = trpc.localAuth.register.useMutation();
+  const yearsQuery = trpc.year.list.useQuery(undefined, { staleTime: 1000 * 60 * 5 });
+  const getYear = trpc.year.getById.useQuery(
+    { id: Number(yearId || 0) },
+    { enabled: !!yearId }
+  );
 
   // Redirect if authenticated
   if (isAuthenticated && user) {
-    const dest = (user.role === "admin" || user.role === "promo_representative") ? "/admin" : "/dashboard";
+    const dest = !user.profileComplete
+      ? "/complete-profile"
+      : (user.role === "admin" || user.role === "promo_representative")
+        ? "/admin"
+        : "/dashboard";
     navigate(dest);
     return null;
   }
@@ -67,6 +81,32 @@ export default function Login() {
     window.location.href = "/api/google/auth/start";
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await registerMutation.mutateAsync({
+        name,
+        email,
+        ensamCode,
+        password,
+        yearId: Number(yearId),
+        sectorId: sectorId ? Number(sectorId) : undefined,
+      });
+
+      localStorage.setItem("local_auth_token", result.token);
+      const destination = (result.user.role === "admin" || result.user.role === "promo_representative") ? "/admin" : "/dashboard";
+      window.location.href = destination;
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || t("login.registrationFailed") || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const googleAuthToken = params.get("googleAuthToken");
@@ -86,7 +126,7 @@ export default function Login() {
         <button
           type="button"
           onClick={() => navigate("/studyam")}
-          className="text-center mb-6 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
+          className="text-center mb-4 w-full bg-transparent border-0 hover:opacity-90 focus:outline-none"
         >
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#b24760] to-[#8e3850] shadow-lg shadow-[#b24760]/30 mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
@@ -190,6 +230,155 @@ export default function Login() {
               </form>
             </>
           )}
+
+          {mode === "register" && (
+            <>
+              <h2 className="text-xl font-semibold text-center text-[#1a1a2e] mb-2">
+                Create your account
+              </h2>
+              <p className="text-sm text-[#6b6b7b] text-center mb-6">
+                Register without using Google.
+              </p>
+
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Name</label>
+                  <div className="relative">
+                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your full name"
+                      className="w-full pl-10 pr-4 py-3 glass-input text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full pl-10 pr-4 py-3 glass-input text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                    {t("common.ensamCode")}
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
+                    <input
+                      type="text"
+                      value={ensamCode}
+                      onChange={(e) => setEnsamCode(e.target.value)}
+                      placeholder={t("login.enterEnsamCode")}
+                      className="w-full pl-10 pr-4 py-3 glass-input text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">
+                    {t("common.password")}
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6b7b]" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t("login.enterPassword")}
+                      className="w-full pl-10 pr-12 py-3 glass-input text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b6b7b] hover:text-[#b24760]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Year</label>
+                  <select
+                    value={yearId}
+                    onChange={(e) => {
+                      setYearId(Number(e.target.value));
+                      setSectorId("");
+                    }}
+                    className="w-full px-3 py-3 glass-input text-sm"
+                    required
+                  >
+                    <option value="">Select your year</option>
+                    {yearsQuery.data?.map((year) => (
+                      <option key={year.id} value={year.id}>
+                        {year.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {getYear.data?.hasSectors && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Sector</label>
+                    <select
+                      value={sectorId}
+                      onChange={(e) => setSectorId(e.target.value ? Number(e.target.value) : "")}
+                      className="w-full px-3 py-3 glass-input text-sm"
+                    >
+                      <option value="">Select a sector</option>
+                      {getYear.data.sectors?.map((sector) => (
+                        <option key={sector.id} value={sector.id}>
+                          {sector.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  {loading ? "Creating account..." : "Create account"}
+                </button>
+              </form>
+            </>
+          )}
+
+          <div className="mt-6 flex justify-center text-sm text-[#6b6b7b]">
+            {mode === "login" ? (
+              <button type="button" onClick={() => setMode("register")} className="text-[#b24760] hover:underline text-center">
+                Create account without Google
+              </button>
+            ) : (
+              <button type="button" onClick={() => setMode("login")} className="text-[#b24760] hover:underline flex items-center gap-2 text-center">
+                <ArrowLeft className="w-4 h-4" /> Back to sign in
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

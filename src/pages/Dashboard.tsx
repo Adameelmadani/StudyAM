@@ -24,7 +24,7 @@ import { Menu, X,
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FOLDER_COLORS, DOC_TYPE_BG_COLORS } from "@/const";
-import { detectFileTypeFromUrl, getEmbedUrl } from "@/lib/fileTypeDetection";
+import { detectFileTypeFromUrl, detectFileTypeFromName, getEmbedUrl } from "@/lib/fileTypeDetection";
 import { DocumentCard } from "@/components/DocumentCard";
 import { ThumbnailCard } from "@/components/ThumbnailCard";
 
@@ -84,6 +84,9 @@ export default function Dashboard() {
   const [linkFileType, setLinkFileType] = useState<"spreadsheets" | "presentation" | "file" | "video">("file");
   const [detectedFileType, setDetectedFileType] = useState<string | null>(null);
   const [linkError, setLinkError] = useState("");
+  const [linkMode, setLinkMode] = useState<"url" | "file">("url");
+  const [linkFile, setLinkFile] = useState<File | null>(null);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [moduleName, setModuleName] = useState("");
   const [moduleSemester, setModuleSemester] = useState<number>(1);
   const [moduleError, setModuleError] = useState("");
@@ -100,7 +103,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"courses" | "settings">("courses");
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
   const [editYear, setEditYear] = useState<number | "">("");
   const [editSector, setEditSector] = useState<number | "">("");
   const [settingsError, setSettingsError] = useState("");
@@ -111,8 +113,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [authLoading, isAuthenticated, navigate]);
+    if (!authLoading && isAuthenticated && user && !user.profileComplete) {
+      navigate("/complete-profile");
+    }
+  }, [authLoading, isAuthenticated, navigate, user]);
 
   const isYearMatch = user?.yearId === Number(selectedYear);
   const isSectorMatch = user?.sectorId === Number(selectedSector) || (!selectedSector && !user?.sectorId);
@@ -188,8 +194,10 @@ export default function Dashboard() {
   const createDocMutation = trpc.document.create.useMutation({
     onSuccess: () => {
       setShowLinkModal(false);
+      setLinkMode("url");
       setLinkTitle("");
       setLinkUrl("");
+      setLinkFile(null);
       setLinkError("");
       setDetectedFileType(null);
       setLinkFileType("file");
@@ -202,6 +210,91 @@ export default function Dashboard() {
       setLinkError(err.message || "Failed to create document.");
     },
   });
+
+  const { data: googleDriveStatus } = trpc.googleDrive.status.useQuery(undefined, { enabled: !!(isRepresentative || isPromoRepresentative || isAdmin) });
+  const connectGoogleDriveMutation = trpc.googleDrive.connectUrl.useMutation();
+  const disconnectGoogleDriveMutation = trpc.googleDrive.disconnect.useMutation({
+    onSuccess: () => {
+      utils.googleDrive.status.invalidate();
+    },
+  });
+
+  const handleLinkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedElement) return;
+    setLinkError("");
+
+    try {
+      if (linkMode === "url") {
+        await createDocMutation.mutateAsync({
+          title: linkTitle,
+          url: linkUrl,
+          type: linkType,
+          fileType: linkFileType,
+          elementId: selectedElement,
+        });
+        return;
+      }
+
+      if (!linkFile) {
+        setLinkError("Please select a file to upload");
+        return;
+      }
+
+      if (!googleDriveStatus?.connected) {
+        setLinkError("Connect your Google account before uploading files");
+        return;
+      }
+
+      setIsUploadingDocument(true);
+      const formData = new FormData();
+      formData.append("title", linkTitle);
+      formData.append("type", linkType);
+      formData.append("fileType", linkFileType);
+      formData.append("elementId", String(selectedElement));
+      formData.append("file", linkFile);
+
+      const token = localStorage.getItem("local_auth_token");
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        headers: token ? { "x-local-auth-token": token } : undefined,
+        body: formData,
+        credentials: "include",
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (!response.ok) {
+        throw new Error(payload.error || payload.message || "Failed to upload file");
+      }
+
+      setShowLinkModal(false);
+      setLinkMode("url");
+      setLinkTitle("");
+      setLinkUrl("");
+      setLinkFile(null);
+      setLinkError("");
+      setDetectedFileType(null);
+      setLinkFileType("file");
+      if (selectedElement) {
+        utils.document.list.invalidate({ elementId: selectedElement });
+      }
+      utils.document.recent.invalidate();
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setLinkError(error.message || "Failed to add link");
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  };
+
+  const handleConnectGoogleDrive = async () => {
+    try {
+      const result = await connectGoogleDriveMutation.mutateAsync();
+      window.location.href = result.url;
+    } catch (error) {
+      setLinkError(error instanceof Error ? error.message : "Failed to connect Google account");
+    }
+  };
   const createModuleMutation = trpc.module.create.useMutation({
     onSuccess: () => {
       setShowModuleModal(false);
@@ -295,7 +388,6 @@ export default function Dashboard() {
     try {
       await updateProfileMutation.mutateAsync({
         name: editName,
-        email: editEmail,
         yearId: editYear ? Number(editYear) : undefined,
         sectorId: editSector ? Number(editSector) : null,
       });
@@ -306,7 +398,6 @@ export default function Dashboard() {
 
   const startEditing = () => {
     setEditName(user?.name || "");
-    setEditEmail(user?.email || "");
     setEditYear(user?.yearId || "");
     setEditSector(user?.sectorId || "");
     setIsEditingSettings(true);
@@ -389,6 +480,21 @@ export default function Dashboard() {
       setDetectedFileType(null);
     }
   }, [linkUrl]);
+
+  useEffect(() => {
+    if (linkMode !== "file") return;
+
+    if (!linkFile) {
+      setDetectedFileType(null);
+      return;
+    }
+
+    const detected = detectFileTypeFromName(linkFile.name, linkFile.type);
+    setDetectedFileType(detected);
+    if (detected) {
+      setLinkFileType(detected as any);
+    }
+  }, [linkFile, linkMode]);
 
   if (authLoading) {
     return (
@@ -1053,17 +1159,6 @@ export default function Dashboard() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-[#1a1a2e]">{t("common.email")}</label>
-                      <input
-                        type="email"
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
-                        className="w-full px-4 py-3 glass-input text-sm"
-                        placeholder={t("common.email")}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
                       <label className="text-sm font-medium text-[#6b6b7b]">{t("common.ensamCode")}</label>
                       <div className="px-4 py-3 glass-input text-sm bg-gray-50/50 cursor-not-allowed opacity-70">
                         {user.ensamCode}
@@ -1131,38 +1226,81 @@ export default function Dashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="glass-strong p-8 w-full max-w-md max-h-[90vh] overflow-y-auto animate-fadeInUp">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-[#1a1a2e]">{t("dashboard.addDriveYoutubeUrl")}</h3>
-                <p className="text-xs text-[#6b6b7b] mt-1">
-                  {t("dashboard.folder")}: {t(`types.${linkType}`)}
-                </p>
-              </div>
-              <button onClick={closeLinkModal} className="p-1 rounded-lg hover:bg-[#fdf2f4]">
+              <h3 className="text-lg font-semibold text-[#1a1a2e]">
+                {linkMode === "url" ? t("dashboard.addDriveYoutubeUrl") : "Upload file to Drive"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setLinkMode("url");
+                  setLinkTitle("");
+                  setLinkUrl("");
+                  setLinkFile(null);
+                  setDetectedFileType(null);
+                  setLinkError("");
+                  setLinkFileType("file");
+                }}
+                className="p-1 rounded-lg hover:bg-[#fdf2f4]"
+              >
                 <X className="w-5 h-5 text-[#6b6b7b]" />
               </button>
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setLinkError("");
-                if (!selectedElement) {
-                  setLinkError("Select an element folder first.");
-                  return;
-                }
-                if (!isGoogleDriveYoutubeUrl(linkUrl)) {
-                  setLinkError("Please provide a Google Drive Youtube URL.");
-                  return;
-                }
-                createDocMutation.mutate({
-                  title: linkTitle,
-                  type: linkType,
-                  fileType: linkFileType,
-                  url: linkUrl,
-                  elementId: selectedElement,
-                });
-              }}
-              className="space-y-4"
-            >
+            <form onSubmit={handleLinkSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-white/70 border border-white/70">
+                <button
+                  type="button"
+                  onClick={() => setLinkMode("url")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                    linkMode === "url"
+                      ? "bg-[#1a1a2e] text-white shadow-sm"
+                      : "text-[#6b6b7b] hover:bg-[#f8f4f5]"
+                  }`}
+                >
+                  Add link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLinkMode("file")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                    linkMode === "file"
+                      ? "bg-[#1a1a2e] text-white shadow-sm"
+                      : "text-[#6b6b7b] hover:bg-[#f8f4f5]"
+                  }`}
+                >
+                  Upload file
+                </button>
+              </div>
+              {linkMode === "file" && (
+                <div className={`p-3 rounded-lg border text-sm ${googleDriveStatus?.connected ? "bg-green-50 border-green-200 text-green-700" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                  {googleDriveStatus?.connected ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        Connected Google account: <span className="font-semibold">{googleDriveStatus.email || "unknown"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => disconnectGoogleDriveMutation.mutate()}
+                        className="text-xs font-medium underline"
+                        disabled={disconnectGoogleDriveMutation.isLoading}
+                      >
+                        {disconnectGoogleDriveMutation.isLoading ? "Disconnecting..." : "Disconnect"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>Connect your Google account to upload files into the configured Drive folder.</div>
+                      <button
+                        type="button"
+                        onClick={handleConnectGoogleDrive}
+                        className="px-3 py-2 rounded-lg bg-[#1a1a2e] text-white text-xs font-medium"
+                        disabled={connectGoogleDriveMutation.isLoading}
+                      >
+                        {connectGoogleDriveMutation.isLoading ? "Connecting..." : "Connect Google"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("common.title")}</label>
                 <input
@@ -1174,27 +1312,56 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive Youtube URL</label>
-                <input
-                  type="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 glass-input text-sm"
-                  placeholder="https://drive.google.com/..."
-                  required
-                />
-              </div>
+              {linkMode === "url" ? (
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">Google Drive or YouTube URL</label>
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    placeholder="https://drive.google.com/..."
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File to upload</label>
+                  <input
+                    type="file"
+                    onChange={(e) => setLinkFile(e.target.files?.[0] || null)}
+                    className="w-full px-4 py-2.5 glass-input text-sm"
+                    required
+                  />
+                  <p className="mt-2 text-xs text-[#6b6b7b]">
+                    The file will be uploaded to the configured Google Drive folder, not stored on this server.
+                  </p>
+                </div>
+              )}
               {detectedFileType && (
                 <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
                   Detected: <span className="font-semibold capitalize">{detectedFileType}</span>
                 </div>
               )}
               <div>
+                <label className="block text-sm font-medium text-[#1a1a2e] mb-2">{t("dashboard.type")}</label>
+                <select
+                  value={linkType}
+                  onChange={(e) => setLinkType(e.target.value as DocType)}
+                  className="w-full px-4 py-2.5 glass-input text-sm"
+                >
+                  <option value="cours">{t("types.cours")}</option>
+                  <option value="exam">{t("types.exam")}</option>
+                  <option value="test">{t("types.test")}</option>
+                  <option value="tp">{t("types.tp")}</option>
+                  <option value="resume">{t("types.resume")}</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-[#1a1a2e] mb-2">File Type</label>
                 <select
                   value={linkFileType}
-                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file")}
+                  onChange={(e) => setLinkFileType(e.target.value as "spreadsheets" | "presentation" | "file" | "video")}
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
                 >
@@ -1210,11 +1377,28 @@ export default function Dashboard() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={closeLinkModal} className="flex-1 btn-glass">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLinkModal(false);
+                    setLinkMode("url");
+                    setLinkTitle("");
+                    setLinkUrl("");
+                    setLinkFile(null);
+                    setDetectedFileType(null);
+                    setLinkError("");
+                    setLinkFileType("file");
+                  }}
+                  className="flex-1 btn-glass"
+                >
                   {t("common.cancel")}
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {t("dashboard.saveLink")}
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                  disabled={createDocMutation.isLoading || isUploadingDocument}
+                >
+                  {createDocMutation.isLoading || isUploadingDocument ? t("common.loading") : t("common.save")}
                 </button>
               </div>
             </form>

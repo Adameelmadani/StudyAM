@@ -27,6 +27,7 @@ export const users = mysqlTable("users", {
   googleConnectedAt: timestamp("googleConnectedAt"),
   yearId: bigint("yearId", { mode: "number", unsigned: true }),
   sectorId: bigint("sectorId", { mode: "number", unsigned: true }),
+  profileComplete: boolean("profileComplete").default(false).notNull(),
   isApproved: boolean("isApproved").default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
