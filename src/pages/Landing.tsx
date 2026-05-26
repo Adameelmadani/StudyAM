@@ -49,12 +49,6 @@ export default function Landing() {
             >
               {t("common.signIn")}
             </button>
-            <button
-              onClick={handleAuthAction}
-              className="btn-primary text-[12px] sm:text-sm py-2 px-5"
-            >
-              {t("common.getStarted")}
-            </button>
           </div>
         </div>
       </nav>
@@ -82,13 +76,7 @@ export default function Landing() {
               {t("landing.heroDesc")}
             </p>
             <div className="flex flex-wrap gap-4">
-              <button
-                onClick={handleAuthAction}
-                className="btn-primary flex items-center gap-2 border border-white/30"
-              >
-                {t("common.getStarted")}
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {/* 'Get Started' button removed per request */}
               <button
                 onClick={() => {
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
