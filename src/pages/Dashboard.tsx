@@ -161,16 +161,18 @@ export default function Dashboard() {
 
   const utils = trpc.useUtils();
   const { data: years } = trpc.year.list.useQuery();
+  const selectedYearData = years?.find((y) => y.id === selectedYear);
+  const courseSectorId = selectedYearData?.hasSectors ? selectedSector : undefined;
   const { data: sectors } = trpc.sector.byYear.useQuery(
     { yearId: Number(selectedYear) },
-    { enabled: !!selectedYear && years?.find((y) => y.id === selectedYear)?.hasSectors }
+    { enabled: !!selectedYear && !!selectedYearData?.hasSectors }
   );
   const { data: modulesList } = trpc.module.list.useQuery(
-    { yearId: Number(selectedYear), sectorId: selectedSector ? Number(selectedSector) : undefined },
+    { yearId: Number(selectedYear), sectorId: courseSectorId ? Number(courseSectorId) : undefined },
     { enabled: !!selectedYear }
   );
   const { data: recentDocs } = trpc.document.recent.useQuery(
-    { yearId: Number(selectedYear), sectorId: selectedSector ? Number(selectedSector) : undefined, limit: 6 },
+    { yearId: Number(selectedYear), sectorId: courseSectorId ? Number(courseSectorId) : undefined, limit: 6 },
     { enabled: !!selectedYear }
   );
 
@@ -403,7 +405,6 @@ export default function Dashboard() {
     setIsEditingSettings(true);
   };
 
-  const selectedYearData = years?.find((y) => y.id === selectedYear);
   const showSectorSelector = selectedYearData?.hasSectors;
   const selectedSectorData = selectedSector
     ? sectors?.find((s) => s.id === selectedSector)
